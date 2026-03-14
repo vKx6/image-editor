@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Editor - Mosaic & Fill</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #fff;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #4fc3f7;
+    }
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 20px;
+      padding: 15px;
+      background: #16213e;
+      border-radius: 8px;
+    }
+    .toolbar button, .toolbar input[type="file"], .toolbar label {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .toolbar button {
+      background: #4fc3f7;
+      color: #1a1a2e;
+    }
+    .toolbar button:hover {
+      background: #29b6f6;
+    }
+    .toolbar button.active {
+      background: #ff6b6b;
+      color: #fff;
+    }
+    .toolbar button:disabled {
+      background: #555;
+      cursor: not-allowed;
+    }
+    .toolbar label {
+      background: #7c4dff;
+      color: #fff;
+      display: inline-block;
+    }
+    .toolbar label:hover {
+      background: #651fff;
+    }
+    .toolbar input[type="file"] {
+      display: none;
+    }
+    .options {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .options label {
+      background: transparent;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .options input[type="range"] {
+      width: 100px;
+    }
+    .options input[type="color"] {
+      width: 40px;
+      height: 30px;
+      border: none;
+      cursor: pointer;
+    }
+    .canvas-container {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      background: #0f0f1a;
+      border-radius: 8px;
+      padding: 20px;
+      min-height: 400px;
+    }
+    #canvas {
+      max-width: 100%;
+      cursor: crosshair;
+      border: 2px solid #333;
+    }
+    .selection-box {
+      position: absolute;
+      border: 2px dashed #ff6b6b;
+      background: rgba(255, 107, 107, 0.1);
+      pointer-events: none;
+    }
+    .info {
+      text-align: center;
+      margin-top: 15px;
+      color: #888;
+      font-size: 14px;
+    }
+    .shortcuts {
+      margin-top: 20px;
+      padding: 15px;
+      background: #16213e;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+    .shortcuts h3 {
+      margin-bottom: 10px;
+      color: #4fc3f7;
+    }
+    .shortcuts ul {
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 5px;
+    }
+    .shortcuts kbd {
+      background: #333;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Image Editor</h1>
+
+    <div class="toolbar">
+      <label>
+        <input type="file" id="fileInput" accept="image/*">
+        📁 画像を開く
+      </label>
+      <button id="mosaicBtn" class="active">🔲 モザイク</button>
+      <button id="fillBtn">🎨 塗りつぶし</button>
+      <div class="options">
+        <label>
+          サイズ: <span id="sizeValue">10</span>
+          <input type="range" id="mosaicSize" min="5" max="50" value="10">
+        </label>
+        <label>
+          色:
+          <input type="color" id="fillColor" value="#000000">
+        </label>
+      </div>
+      <button id="undoBtn" disabled>↩ 戻す</button>
+      <button id="saveBtn" disabled>💾 保存</button>
+    </div>
+
+    <div class="canvas-container">
+      <canvas id="canvas"></canvas>
+      <div class="selection-box" id="selectionBox" style="display:none;"></div>
+    </div>
+
+    <div class="info" id="info">画像をドラッグ&ドロップ、または「画像を開く」から選択してください</div>
+
+    <div class="shortcuts">
+      <h3>ショートカット</h3>
+      <ul>
+        <li><kbd>M</kbd> モザイクモード</li>
+        <li><kbd>F</kbd> 塗りつぶしモード</li>
+        <li><kbd>Ctrl+Z</kbd> 元に戻す</li>
+        <li><kbd>Ctrl+S</kbd> 保存</li>
+        <li><kbd>↑</kbd><kbd>↓</kbd> サイズ変更</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const fileInput = document.getElementById('fileInput');
+    const mosaicBtn = document.getElementById('mosaicBtn');
+    const fillBtn = document.getElementById('fillBtn');
+    const mosaicSize = document.getElementById('mosaicSize');
+    const sizeValue = document.getElementById('sizeValue');
+    const fillColor = document.getElementById('fillColor');
+    const undoBtn = document.getElementById('undoBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const selectionBox = document.getElementById('selectionBox');
+    const info = document.getElementById('info');
+
+    let mode = 'mosaic'; // 'mosaic' or 'fill'
+    let isDrawing = false;
+    let startX, startY;
+    let history = [];
+    let originalImage = null;
+
+    // Mode switching
+    mosaicBtn.addEventListener('click', () => {
+      mode = 'mosaic';
+      mosaicBtn.classList.add('active');
+      fillBtn.classList.remove('active');
+    });
+
+    fillBtn.addEventListener('click', () => {
+      mode = 'fill';
+      fillBtn.classList.add('active');
+      mosaicBtn.classList.remove('active');
+    });
+
+    // Size slider
+    mosaicSize.addEventListener('input', (e) => {
+      sizeValue.textContent = e.target.value;
+    });
+
+    // File input
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) loadImage(file);
+    });
+
+    // Drag and drop
+    document.body.addEventListener('dragover', (e) => {
+      e.preventDefault();
+    });
+
+    document.body.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) {
+        loadImage(file);
+      }
+    });
+
+    // Load image
+    function loadImage(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+          originalImage = img;
+          history = [];
+          saveState();
+          saveBtn.disabled = false;
+          info.textContent = `${img.width} x ${img.height} | ドラッグで範囲選択 → 自動適用`;
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Save state for undo
+    function saveState() {
+      history.push(canvas.toDataURL());
+      if (history.length > 20) history.shift();
+      undoBtn.disabled = history.length <= 1;
+    }
+
+    // Undo
+    function undo() {
+      if (history.length > 1) {
+        history.pop();
+        const img = new Image();
+        img.onload = () => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0);
+        };
+        img.src = history[history.length - 1];
+        undoBtn.disabled = history.length <= 1;
+      }
+    }
+
+    undoBtn.addEventListener('click', undo);
+
+    // Save image
+    function saveImage() {
+      const link = document.createElement('a');
+      link.download = 'edited-image.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    saveBtn.addEventListener('click', saveImage);
+
+    // Mouse events for selection
+    canvas.addEventListener('mousedown', (e) => {
+      if (!originalImage) return;
+      isDrawing = true;
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      startX = (e.clientX - rect.left) * scaleX;
+      startY = (e.clientY - rect.top) * scaleY;
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (!isDrawing) return;
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const currentX = (e.clientX - rect.left) * scaleX;
+      const currentY = (e.clientY - rect.top) * scaleY;
+
+      // Show selection box
+      const boxRect = canvas.getBoundingClientRect();
+      const left = Math.min(startX, currentX) / scaleX + boxRect.left - canvas.parentElement.getBoundingClientRect().left;
+      const top = Math.min(startY, currentY) / scaleY + boxRect.top - canvas.parentElement.getBoundingClientRect().top;
+      const width = Math.abs(currentX - startX) / scaleX;
+      const height = Math.abs(currentY - startY) / scaleY;
+
+      selectionBox.style.display = 'block';
+      selectionBox.style.left = left + 'px';
+      selectionBox.style.top = top + 'px';
+      selectionBox.style.width = width + 'px';
+      selectionBox.style.height = height + 'px';
+    });
+
+    canvas.addEventListener('mouseup', (e) => {
+      if (!isDrawing) return;
+      isDrawing = false;
+      selectionBox.style.display = 'none';
+
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const endX = (e.clientX - rect.left) * scaleX;
+      const endY = (e.clientY - rect.top) * scaleY;
+
+      const x = Math.min(startX, endX);
+      const y = Math.min(startY, endY);
+      const w = Math.abs(endX - startX);
+      const h = Math.abs(endY - startY);
+
+      if (w > 5 && h > 5) {
+        if (mode === 'mosaic') {
+          applyMosaic(x, y, w, h);
+        } else {
+          applyFill(x, y, w, h);
+        }
+        saveState();
+      }
+    });
+
+    // Apply mosaic
+    function applyMosaic(x, y, w, h) {
+      x = Math.floor(x);
+      y = Math.floor(y);
+      w = Math.floor(w);
+      h = Math.floor(h);
+      const size = parseInt(mosaicSize.value);
+      const imageData = ctx.getImageData(x, y, w, h);
+      const data = imageData.data;
+
+      for (let py = 0; py < h; py += size) {
+        for (let px = 0; px < w; px += size) {
+          let r = 0, g = 0, b = 0, count = 0;
+
+          // Average color in block
+          for (let dy = 0; dy < size && py + dy < h; dy++) {
+            for (let dx = 0; dx < size && px + dx < w; dx++) {
+              const i = ((py + dy) * w + (px + dx)) * 4;
+              r += data[i];
+              g += data[i + 1];
+              b += data[i + 2];
+              count++;
+            }
+          }
+
+          r = Math.round(r / count);
+          g = Math.round(g / count);
+          b = Math.round(b / count);
+
+          // Apply average color to block
+          for (let dy = 0; dy < size && py + dy < h; dy++) {
+            for (let dx = 0; dx < size && px + dx < w; dx++) {
+              const i = ((py + dy) * w + (px + dx)) * 4;
+              data[i] = r;
+              data[i + 1] = g;
+              data[i + 2] = b;
+            }
+          }
+        }
+      }
+
+      ctx.putImageData(imageData, x, y);
+    }
+
+    // Apply fill
+    function applyFill(x, y, w, h) {
+      ctx.fillStyle = fillColor.value;
+      ctx.fillRect(Math.floor(x), Math.floor(y), Math.floor(w), Math.floor(h));
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'm' || e.key === 'M') {
+        mosaicBtn.click();
+      } else if (e.key === 'f' || e.key === 'F') {
+        fillBtn.click();
+      } else if (e.ctrlKey && e.key === 'z') {
+        e.preventDefault();
+        undo();
+      } else if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        if (!saveBtn.disabled) saveImage();
+      } else if (e.key === 'ArrowUp') {
+        mosaicSize.value = Math.min(50, parseInt(mosaicSize.value) + 1);
+        sizeValue.textContent = mosaicSize.value;
+      } else if (e.key === 'ArrowDown') {
+        mosaicSize.value = Math.max(5, parseInt(mosaicSize.value) - 1);
+        sizeValue.textContent = mosaicSize.value;
+      }
+    });
+  </script>
+</body>
+</html>
