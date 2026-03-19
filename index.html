@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Image Editor - Mosaic & Fill</title>
+  <title>Image Editor - Mosaic & Fill & Fanza</title>
   <style>
     * {
       box-sizing: border-box;
@@ -141,12 +141,162 @@
       border-radius: 3px;
       font-family: monospace;
     }
+    /* Tab navigation */
+    .tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 20px;
+    }
+    .tab-btn {
+      padding: 12px 30px;
+      border: none;
+      background: #16213e;
+      color: #888;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.2s;
+      border-bottom: 3px solid transparent;
+    }
+    .tab-btn:first-child {
+      border-radius: 8px 0 0 0;
+    }
+    .tab-btn:last-child {
+      border-radius: 0 8px 0 0;
+    }
+    .tab-btn.active {
+      background: #1e3a5f;
+      color: #4fc3f7;
+      border-bottom-color: #4fc3f7;
+    }
+    .tab-btn:hover:not(.active) {
+      background: #1a2a4a;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    /* Fanza specific styles */
+    .fanza-container {
+      background: #16213e;
+      border-radius: 8px;
+      padding: 20px;
+    }
+    .fanza-upload {
+      border: 2px dashed #4fc3f7;
+      border-radius: 8px;
+      padding: 40px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 20px;
+    }
+    .fanza-upload:hover {
+      background: rgba(79, 195, 247, 0.1);
+    }
+    .fanza-upload.dragover {
+      background: rgba(79, 195, 247, 0.2);
+      border-color: #29b6f6;
+    }
+    .fanza-preview {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .fanza-preview-item {
+      background: #0f0f1a;
+      border-radius: 8px;
+      padding: 15px;
+      text-align: center;
+    }
+    .fanza-preview-item h4 {
+      margin-bottom: 10px;
+      color: #4fc3f7;
+    }
+    .fanza-preview-item canvas {
+      max-width: 100%;
+      border: 2px solid #333;
+    }
+    .fanza-controls {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .fanza-controls label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .fanza-controls input[type="range"] {
+      width: 150px;
+    }
+    .fanza-btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .fanza-btn-primary {
+      background: #4fc3f7;
+      color: #1a1a2e;
+    }
+    .fanza-btn-primary:hover {
+      background: #29b6f6;
+    }
+    .fanza-btn-primary:disabled {
+      background: #555;
+      cursor: not-allowed;
+    }
+    .fanza-btn-success {
+      background: #66bb6a;
+      color: #fff;
+    }
+    .fanza-btn-success:hover {
+      background: #4caf50;
+    }
+    .fanza-info {
+      background: #0f0f1a;
+      padding: 10px 15px;
+      border-radius: 5px;
+      font-size: 13px;
+      color: #aaa;
+    }
+    .fanza-info strong {
+      color: #4fc3f7;
+    }
+    .crop-area {
+      position: relative;
+      display: inline-block;
+      cursor: move;
+    }
+    .crop-overlay {
+      position: absolute;
+      border: 2px solid #ff6b6b;
+      background: rgba(255, 107, 107, 0.2);
+      cursor: move;
+    }
+    .quality-display {
+      font-size: 12px;
+      color: #aaa;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Image Editor</h1>
 
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="editor">🔲 モザイク・塗りつぶし</button>
+      <button class="tab-btn" data-tab="fanza">📸 Fanza変換</button>
+    </div>
+
+    <div id="editorTab" class="tab-content active">
     <div class="toolbar">
       <label>
         <input type="file" id="fileInput" accept="image/*">
@@ -185,6 +335,60 @@
         <li><kbd>↑</kbd><kbd>↓</kbd> サイズ変更</li>
       </ul>
     </div>
+    </div><!-- end editorTab -->
+
+    <div id="fanzaTab" class="tab-content">
+      <div class="fanza-container">
+        <div class="fanza-upload" id="fanzaUpload">
+          <p style="font-size: 18px; margin-bottom: 10px;">📁 画像をドラッグ&ドロップ</p>
+          <p style="color: #888;">または クリックして選択</p>
+          <input type="file" id="fanzaFileInput" accept="image/*" style="display:none;">
+        </div>
+
+        <div class="fanza-controls" id="fanzaControls" style="display:none;">
+          <label>
+            出力形式:
+            <select id="fanzaOutputType" style="padding: 8px; background: #0f0f1a; color: #fff; border: 1px solid #333; border-radius: 4px;">
+              <option value="2:3">サンプル画像 (2:3)</option>
+              <option value="1:1">サムネイル (100x100)</option>
+            </select>
+          </label>
+          <label>
+            X位置: <span id="cropXValue">0</span>%
+            <input type="range" id="cropX" min="0" max="100" value="50">
+          </label>
+          <label>
+            Y位置: <span id="cropYValue">0</span>%
+            <input type="range" id="cropY" min="0" max="100" value="50">
+          </label>
+          <label>
+            品質: <span id="qualityValue">90</span>%
+            <input type="range" id="jpgQuality" min="10" max="100" value="90">
+          </label>
+        </div>
+
+        <div class="fanza-preview" id="fanzaPreview" style="display:none;">
+          <div class="fanza-preview-item" style="flex: 1; max-width: 500px;">
+            <h4>元画像（クロップ範囲）</h4>
+            <div class="crop-area" id="cropArea">
+              <canvas id="fanzaSourceCanvas"></canvas>
+              <div class="crop-overlay" id="cropOverlay"></div>
+            </div>
+          </div>
+          <div class="fanza-preview-item" style="flex: 0 0 auto;">
+            <h4>出力プレビュー</h4>
+            <canvas id="fanzaOutputCanvas"></canvas>
+            <div class="fanza-info" id="fanzaOutputInfo" style="margin-top: 10px;"></div>
+          </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 20px;" id="fanzaActions" style="display:none;">
+          <button class="fanza-btn fanza-btn-success" id="fanzaDownload" style="display:none;">
+            💾 JPGをダウンロード
+          </button>
+        </div>
+      </div>
+    </div><!-- end fanzaTab -->
   </div>
 
   <script>
@@ -425,6 +629,241 @@
         mosaicSize.value = Math.max(5, parseInt(mosaicSize.value) - 1);
         sizeValue.textContent = mosaicSize.value;
       }
+    });
+
+    // ==================== Tab switching ====================
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById(btn.dataset.tab + 'Tab').classList.add('active');
+      });
+    });
+
+    // ==================== Fanza Image Converter ====================
+    const fanzaUpload = document.getElementById('fanzaUpload');
+    const fanzaFileInput = document.getElementById('fanzaFileInput');
+    const fanzaControls = document.getElementById('fanzaControls');
+    const fanzaPreview = document.getElementById('fanzaPreview');
+    const fanzaSourceCanvas = document.getElementById('fanzaSourceCanvas');
+    const fanzaOutputCanvas = document.getElementById('fanzaOutputCanvas');
+    const fanzaSourceCtx = fanzaSourceCanvas.getContext('2d');
+    const fanzaOutputCtx = fanzaOutputCanvas.getContext('2d');
+    const cropOverlay = document.getElementById('cropOverlay');
+    const cropX = document.getElementById('cropX');
+    const cropY = document.getElementById('cropY');
+    const cropXValue = document.getElementById('cropXValue');
+    const cropYValue = document.getElementById('cropYValue');
+    const jpgQuality = document.getElementById('jpgQuality');
+    const qualityValue = document.getElementById('qualityValue');
+    const fanzaOutputType = document.getElementById('fanzaOutputType');
+    const fanzaOutputInfo = document.getElementById('fanzaOutputInfo');
+    const fanzaDownload = document.getElementById('fanzaDownload');
+
+    let fanzaImage = null;
+    let fanzaOutputBlob = null;
+
+    // Upload handlers
+    fanzaUpload.addEventListener('click', () => fanzaFileInput.click());
+    fanzaFileInput.addEventListener('change', (e) => {
+      if (e.target.files[0]) loadFanzaImage(e.target.files[0]);
+    });
+    fanzaUpload.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      fanzaUpload.classList.add('dragover');
+    });
+    fanzaUpload.addEventListener('dragleave', () => {
+      fanzaUpload.classList.remove('dragover');
+    });
+    fanzaUpload.addEventListener('drop', (e) => {
+      e.preventDefault();
+      fanzaUpload.classList.remove('dragover');
+      if (e.dataTransfer.files[0]) loadFanzaImage(e.dataTransfer.files[0]);
+    });
+
+    function loadFanzaImage(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          fanzaImage = img;
+          // Display source image (scaled for preview)
+          const maxPreviewWidth = 450;
+          const scale = Math.min(1, maxPreviewWidth / img.width);
+          fanzaSourceCanvas.width = img.width * scale;
+          fanzaSourceCanvas.height = img.height * scale;
+          fanzaSourceCtx.drawImage(img, 0, 0, fanzaSourceCanvas.width, fanzaSourceCanvas.height);
+
+          fanzaControls.style.display = 'flex';
+          fanzaPreview.style.display = 'flex';
+          fanzaDownload.style.display = 'inline-block';
+
+          updateFanzaCrop();
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function updateFanzaCrop() {
+      if (!fanzaImage) return;
+
+      const outputType = fanzaOutputType.value;
+      const isThumb = outputType === '1:1';
+
+      // Calculate crop dimensions based on aspect ratio
+      let targetRatio, outputWidth, outputHeight;
+      if (isThumb) {
+        targetRatio = 1;
+        outputWidth = 100;
+        outputHeight = 100;
+      } else {
+        targetRatio = 2 / 3;
+        // For 2:3, we'll output at a reasonable size, max 800 width
+        outputWidth = Math.min(800, fanzaImage.width);
+        outputHeight = Math.round(outputWidth / targetRatio);
+      }
+
+      const imgRatio = fanzaImage.width / fanzaImage.height;
+      let cropWidth, cropHeight;
+
+      if (imgRatio > targetRatio) {
+        // Image is wider, crop width
+        cropHeight = fanzaImage.height;
+        cropWidth = cropHeight * targetRatio;
+      } else {
+        // Image is taller, crop height
+        cropWidth = fanzaImage.width;
+        cropHeight = cropWidth / targetRatio;
+      }
+
+      // Position based on sliders
+      const xPercent = parseInt(cropX.value);
+      const yPercent = parseInt(cropY.value);
+      cropXValue.textContent = xPercent;
+      cropYValue.textContent = yPercent;
+
+      const maxOffsetX = fanzaImage.width - cropWidth;
+      const maxOffsetY = fanzaImage.height - cropHeight;
+      const offsetX = maxOffsetX * (xPercent / 100);
+      const offsetY = maxOffsetY * (yPercent / 100);
+
+      // Update overlay on source canvas
+      const previewScale = fanzaSourceCanvas.width / fanzaImage.width;
+      cropOverlay.style.left = (offsetX * previewScale) + 'px';
+      cropOverlay.style.top = (offsetY * previewScale) + 'px';
+      cropOverlay.style.width = (cropWidth * previewScale) + 'px';
+      cropOverlay.style.height = (cropHeight * previewScale) + 'px';
+
+      // Draw output preview
+      fanzaOutputCanvas.width = outputWidth;
+      fanzaOutputCanvas.height = outputHeight;
+      fanzaOutputCtx.drawImage(
+        fanzaImage,
+        offsetX, offsetY, cropWidth, cropHeight,
+        0, 0, outputWidth, outputHeight
+      );
+
+      // Generate JPG and check size
+      generateFanzaOutput();
+    }
+
+    function generateFanzaOutput() {
+      const quality = parseInt(jpgQuality.value) / 100;
+      qualityValue.textContent = jpgQuality.value;
+
+      fanzaOutputCanvas.toBlob((blob) => {
+        fanzaOutputBlob = blob;
+        const sizeMB = (blob.size / (1024 * 1024)).toFixed(2);
+        const sizeKB = (blob.size / 1024).toFixed(1);
+        const isUnder3MB = blob.size <= 3 * 1024 * 1024;
+
+        const outputType = fanzaOutputType.value;
+        const dims = outputType === '1:1' ? '100x100' : `${fanzaOutputCanvas.width}x${fanzaOutputCanvas.height}`;
+
+        fanzaOutputInfo.innerHTML = `
+          <strong>サイズ:</strong> ${dims} |
+          <strong>ファイル:</strong> ${sizeMB > 1 ? sizeMB + ' MB' : sizeKB + ' KB'}
+          ${isUnder3MB ? '✅' : '⚠️ 3MB超過 - 品質を下げてください'}
+        `;
+
+        if (!isUnder3MB) {
+          fanzaOutputInfo.style.color = '#ff6b6b';
+        } else {
+          fanzaOutputInfo.style.color = '#aaa';
+        }
+      }, 'image/jpeg', quality);
+    }
+
+    // Event listeners for controls
+    cropX.addEventListener('input', updateFanzaCrop);
+    cropY.addEventListener('input', updateFanzaCrop);
+    jpgQuality.addEventListener('input', updateFanzaCrop);
+    fanzaOutputType.addEventListener('change', updateFanzaCrop);
+
+    // Download button
+    fanzaDownload.addEventListener('click', () => {
+      if (!fanzaOutputBlob) return;
+
+      const outputType = fanzaOutputType.value;
+      const filename = outputType === '1:1' ? 'thumbnail_100x100.jpg' : 'fanza_sample.jpg';
+
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(fanzaOutputBlob);
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    });
+
+    // Drag crop overlay
+    let isDraggingCrop = false;
+    let dragStartX, dragStartY, startCropX, startCropY;
+
+    cropOverlay.addEventListener('mousedown', (e) => {
+      isDraggingCrop = true;
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+      startCropX = parseInt(cropX.value);
+      startCropY = parseInt(cropY.value);
+      e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isDraggingCrop) return;
+
+      const previewScale = fanzaSourceCanvas.width / fanzaImage.width;
+      const dx = (e.clientX - dragStartX) / previewScale;
+      const dy = (e.clientY - dragStartY) / previewScale;
+
+      const outputType = fanzaOutputType.value;
+      const targetRatio = outputType === '1:1' ? 1 : 2 / 3;
+      const imgRatio = fanzaImage.width / fanzaImage.height;
+
+      let cropWidth, cropHeight;
+      if (imgRatio > targetRatio) {
+        cropHeight = fanzaImage.height;
+        cropWidth = cropHeight * targetRatio;
+      } else {
+        cropWidth = fanzaImage.width;
+        cropHeight = cropWidth / targetRatio;
+      }
+
+      const maxOffsetX = fanzaImage.width - cropWidth;
+      const maxOffsetY = fanzaImage.height - cropHeight;
+
+      const newXPercent = Math.max(0, Math.min(100, startCropX + (dx / maxOffsetX) * 100));
+      const newYPercent = Math.max(0, Math.min(100, startCropY + (dy / maxOffsetY) * 100));
+
+      cropX.value = Math.round(newXPercent);
+      cropY.value = Math.round(newYPercent);
+
+      updateFanzaCrop();
+    });
+
+    document.addEventListener('mouseup', () => {
+      isDraggingCrop = false;
     });
   </script>
 </body>
