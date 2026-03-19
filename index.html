@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Image Editor - Mosaic & Fill & Fanza</title>
+  <title>Image Editor - Mosaic & Fill & Fanza & Collage</title>
   <style>
     * {
       box-sizing: border-box;
@@ -111,6 +111,20 @@
       border: 2px dashed #ff6b6b;
       background: rgba(255, 107, 107, 0.1);
       pointer-events: none;
+    }
+    .text-preview {
+      position: absolute;
+      cursor: move;
+      border: 2px dashed #4fc3f7;
+      padding: 4px;
+      user-select: none;
+      white-space: pre;
+    }
+    .text-preview:hover {
+      border-color: #29b6f6;
+    }
+    .text-preview.dragging {
+      border-color: #ff6b6b;
     }
     .info {
       text-align: center;
@@ -285,6 +299,238 @@
       font-size: 12px;
       color: #aaa;
     }
+    /* Collage styles */
+    .collage-container {
+      background: #16213e;
+      border-radius: 8px;
+      padding: 20px;
+    }
+    .collage-toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+      align-items: center;
+    }
+    .collage-toolbar label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .collage-toolbar input[type="number"] {
+      width: 80px;
+      padding: 8px;
+      background: #0f0f1a;
+      border: 1px solid #333;
+      border-radius: 4px;
+      color: #fff;
+    }
+    .collage-toolbar select {
+      padding: 8px;
+      background: #0f0f1a;
+      border: 1px solid #333;
+      border-radius: 4px;
+      color: #fff;
+    }
+    .collage-main {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .collage-canvas-area {
+      flex: 1;
+      min-width: 400px;
+      background: #0f0f1a;
+      border-radius: 8px;
+      padding: 15px;
+    }
+    .collage-canvas-wrapper {
+      position: relative;
+      display: inline-block;
+      background: repeating-conic-gradient(#333 0% 25%, #444 0% 50%) 50% / 20px 20px;
+      border: 2px solid #333;
+    }
+    #collageCanvas {
+      display: block;
+    }
+    .collage-sidebar {
+      width: 300px;
+      background: #0f0f1a;
+      border-radius: 8px;
+      padding: 15px;
+    }
+    .collage-upload-area {
+      border: 2px dashed #4fc3f7;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      margin-bottom: 15px;
+      transition: all 0.2s;
+    }
+    .collage-upload-area:hover {
+      background: rgba(79, 195, 247, 0.1);
+    }
+    .collage-upload-area.dragover {
+      background: rgba(79, 195, 247, 0.2);
+    }
+    .collage-image-list {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .collage-image-item {
+      display: flex;
+      gap: 10px;
+      padding: 10px;
+      background: #16213e;
+      border-radius: 5px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      align-items: center;
+    }
+    .collage-image-item:hover {
+      background: #1e3a5f;
+    }
+    .collage-image-item.selected {
+      border: 2px solid #4fc3f7;
+      background: #1e3a5f;
+    }
+    .collage-image-item img {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+    .collage-image-item-info {
+      flex: 1;
+      font-size: 12px;
+      overflow: hidden;
+    }
+    .collage-image-item-info .name {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 4px;
+    }
+    .collage-image-item-buttons {
+      display: flex;
+      gap: 5px;
+    }
+    .collage-image-item-buttons button {
+      padding: 4px 8px;
+      font-size: 11px;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      background: #333;
+      color: #fff;
+    }
+    .collage-image-item-buttons button:hover {
+      background: #555;
+    }
+    .collage-image-item-buttons button.delete {
+      background: #d32f2f;
+    }
+    .collage-image-item-buttons button.delete:hover {
+      background: #f44336;
+    }
+    .collage-controls {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid #333;
+    }
+    .collage-controls h4 {
+      margin-bottom: 10px;
+      color: #4fc3f7;
+    }
+    .collage-control-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .collage-control-row label {
+      width: 60px;
+      font-size: 12px;
+    }
+    .collage-control-row input[type="range"] {
+      flex: 1;
+    }
+    .collage-control-row input[type="number"] {
+      width: 60px;
+      padding: 4px;
+      background: #16213e;
+      border: 1px solid #333;
+      border-radius: 4px;
+      color: #fff;
+    }
+    .collage-control-row span {
+      width: 40px;
+      text-align: right;
+      font-size: 12px;
+    }
+    .collage-crop-controls {
+      margin-top: 10px;
+      padding: 10px;
+      background: #16213e;
+      border-radius: 5px;
+    }
+    .collage-crop-controls h5 {
+      margin-bottom: 8px;
+      color: #ff6b6b;
+    }
+    .collage-btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .collage-btn-primary {
+      background: #4fc3f7;
+      color: #1a1a2e;
+    }
+    .collage-btn-primary:hover {
+      background: #29b6f6;
+    }
+    .collage-btn-success {
+      background: #66bb6a;
+      color: #fff;
+    }
+    .collage-btn-success:hover {
+      background: #4caf50;
+    }
+    .collage-btn-small {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+    .collage-handles {
+      position: absolute;
+      pointer-events: none;
+    }
+    .collage-handle {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: #4fc3f7;
+      border: 1px solid #fff;
+      pointer-events: auto;
+      cursor: pointer;
+    }
+    .collage-handle.rotate {
+      width: 16px;
+      height: 16px;
+      background: #ff6b6b;
+      border-radius: 50%;
+      cursor: grab;
+    }
+    .collage-selection-box {
+      position: absolute;
+      border: 2px solid #4fc3f7;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
@@ -294,6 +540,7 @@
     <div class="tabs">
       <button class="tab-btn active" data-tab="editor">🔲 モザイク・塗りつぶし</button>
       <button class="tab-btn" data-tab="fanza">📸 Fanza変換</button>
+      <button class="tab-btn" data-tab="collage">🖼️ コラージュ</button>
     </div>
 
     <div id="editorTab" class="tab-content active">
@@ -304,6 +551,7 @@
       </label>
       <button id="mosaicBtn" class="active">🔲 モザイク</button>
       <button id="fillBtn">🎨 塗りつぶし</button>
+      <button id="textBtn">📝 テキスト</button>
       <div class="options">
         <label>
           サイズ: <span id="sizeValue">10</span>
@@ -314,6 +562,55 @@
           <input type="color" id="fillColor" value="#000000">
         </label>
       </div>
+      <div class="options" id="textOptions" style="display:none;">
+        <input type="text" id="textInput" placeholder="テキストを入力..." style="padding: 8px; width: 150px; background: #0f0f1a; border: 1px solid #333; border-radius: 4px; color: #fff;">
+        <label>
+          フォント:
+          <select id="textFont" style="padding: 6px; background: #0f0f1a; border: 1px solid #333; border-radius: 4px; color: #fff;">
+            <option value="Arial">Arial</option>
+            <option value="'Helvetica Neue'">Helvetica</option>
+            <option value="'Times New Roman'">Times New Roman</option>
+            <option value="Georgia">Georgia</option>
+            <option value="'Courier New'">Courier New</option>
+            <option value="Impact">Impact</option>
+            <option value="'Comic Sans MS'">Comic Sans</option>
+            <option value="'Hiragino Sans'">ヒラギノ角ゴ</option>
+            <option value="'Hiragino Mincho ProN'">ヒラギノ明朝</option>
+            <option value="'Yu Gothic'">游ゴシック</option>
+            <option value="'Yu Mincho'">游明朝</option>
+            <option value="'Noto Sans JP'">Noto Sans JP</option>
+          </select>
+        </label>
+        <label>
+          サイズ: <span id="textSizeValue">32</span>px
+          <input type="range" id="textSize" min="12" max="200" value="32">
+        </label>
+        <label>
+          文字色:
+          <input type="color" id="textColor" value="#ffffff">
+        </label>
+        <label>
+          背景色:
+          <input type="color" id="textBgColor" value="#000000">
+        </label>
+        <label>
+          <input type="checkbox" id="textBgEnabled"> 背景あり
+        </label>
+        <label>
+          透過: <span id="textBgOpacityValue">100</span>%
+          <input type="range" id="textBgOpacity" min="0" max="100" value="100">
+        </label>
+        <label>
+          太字:
+          <input type="checkbox" id="textBold">
+        </label>
+        <label>
+          回転: <span id="textRotationValue">0</span>°
+          <input type="range" id="textRotation" min="-180" max="180" value="0">
+        </label>
+        <button id="textApplyBtn" style="background:#66bb6a;color:#fff;">✓ 確定</button>
+        <button id="textCancelBtn" style="background:#ff6b6b;color:#fff;">✕ キャンセル</button>
+      </div>
       <button id="undoBtn" disabled>↩ 戻す</button>
       <button id="saveBtn" disabled>💾 保存</button>
     </div>
@@ -321,6 +618,7 @@
     <div class="canvas-container">
       <canvas id="canvas"></canvas>
       <div class="selection-box" id="selectionBox" style="display:none;"></div>
+      <div class="text-preview" id="textPreview" style="display:none;"></div>
     </div>
 
     <div class="info" id="info">画像をドラッグ&ドロップ、または「画像を開く」から選択してください</div>
@@ -330,6 +628,7 @@
       <ul>
         <li><kbd>M</kbd> モザイクモード</li>
         <li><kbd>F</kbd> 塗りつぶしモード</li>
+        <li><kbd>T</kbd> テキストモード</li>
         <li><kbd>Ctrl+Z</kbd> 元に戻す</li>
         <li><kbd>Ctrl+S</kbd> 保存</li>
         <li><kbd>↑</kbd><kbd>↓</kbd> サイズ変更</li>
@@ -389,6 +688,142 @@
         </div>
       </div>
     </div><!-- end fanzaTab -->
+
+    <div id="collageTab" class="tab-content">
+      <div class="collage-container">
+        <div class="collage-toolbar">
+          <label>
+            キャンバス幅:
+            <input type="number" id="collageWidth" value="800" min="100" max="4000">
+          </label>
+          <label>
+            高さ:
+            <input type="number" id="collageHeight" value="600" min="100" max="4000">
+          </label>
+          <label>
+            背景:
+            <select id="collageBg">
+              <option value="transparent">透明</option>
+              <option value="#ffffff">白</option>
+              <option value="#000000">黒</option>
+              <option value="custom">カスタム</option>
+            </select>
+            <input type="color" id="collageBgColor" value="#ffffff" style="display:none;">
+          </label>
+          <button class="collage-btn collage-btn-primary" id="collageApplySize">サイズ適用</button>
+          <button class="collage-btn collage-btn-success" id="collageSave">保存</button>
+        </div>
+
+        <div class="collage-main">
+          <div class="collage-canvas-area">
+            <div class="collage-canvas-wrapper" id="collageCanvasWrapper">
+              <canvas id="collageCanvas" width="800" height="600"></canvas>
+            </div>
+          </div>
+
+          <div class="collage-sidebar">
+            <div class="collage-upload-area" id="collageUpload">
+              <p>📁 画像を追加</p>
+              <p style="font-size: 12px; color: #888;">ドラッグ&ドロップ または クリック</p>
+              <input type="file" id="collageFileInput" accept="image/*" multiple style="display:none;">
+            </div>
+
+            <div class="collage-image-list" id="collageImageList">
+              <!-- Image items will be added here -->
+            </div>
+
+            <div class="collage-controls" id="collageControls" style="display:none;">
+              <h4>選択中の画像</h4>
+              <div class="collage-control-row">
+                <label>X:</label>
+                <input type="number" id="collageItemX" value="0">
+                <label>Y:</label>
+                <input type="number" id="collageItemY" value="0">
+              </div>
+              <div class="collage-control-row">
+                <label>幅:</label>
+                <input type="number" id="collageItemW" value="100">
+                <label>高さ:</label>
+                <input type="number" id="collageItemH" value="100">
+              </div>
+              <div class="collage-control-row">
+                <label>回転:</label>
+                <input type="range" id="collageItemRotation" min="-180" max="180" value="0">
+                <span id="collageItemRotationValue">0°</span>
+              </div>
+              <div class="collage-control-row">
+                <label>不透明度:</label>
+                <input type="range" id="collageItemOpacity" min="0" max="100" value="100">
+                <span id="collageItemOpacityValue">100%</span>
+              </div>
+
+              <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                <button class="collage-btn collage-btn-small" id="collageToggleCrop" style="background:#ff6b6b;color:#fff;">トリミング</button>
+                <button class="collage-btn collage-btn-small" id="collageToggleFade" style="background:#9c27b0;color:#fff;">フェード</button>
+              </div>
+              <div class="collage-crop-controls" id="collageCropControls" style="display:none;">
+                <div class="collage-control-row">
+                  <label>左:</label>
+                  <input type="range" id="collageCropLeft" min="0" max="50" value="0">
+                  <span id="collageCropLeftValue">0%</span>
+                </div>
+                <div class="collage-control-row">
+                  <label>右:</label>
+                  <input type="range" id="collageCropRight" min="0" max="50" value="0">
+                  <span id="collageCropRightValue">0%</span>
+                </div>
+                <div class="collage-control-row">
+                  <label>上:</label>
+                  <input type="range" id="collageCropTop" min="0" max="50" value="0">
+                  <span id="collageCropTopValue">0%</span>
+                </div>
+                <div class="collage-control-row">
+                  <label>下:</label>
+                  <input type="range" id="collageCropBottom" min="0" max="50" value="0">
+                  <span id="collageCropBottomValue">0%</span>
+                </div>
+                <button class="collage-btn collage-btn-small collage-btn-primary" id="collageCropReset">リセット</button>
+              </div>
+              <div class="collage-crop-controls" id="collageFadeControls" style="display:none;">
+                <div class="collage-control-row">
+                  <label>左:</label>
+                  <input type="range" id="collageFadeLeft" min="0" max="50" value="0">
+                  <span id="collageFadeLeftValue">0%</span>
+                </div>
+                <div class="collage-control-row">
+                  <label>右:</label>
+                  <input type="range" id="collageFadeRight" min="0" max="50" value="0">
+                  <span id="collageFadeRightValue">0%</span>
+                </div>
+                <div class="collage-control-row">
+                  <label>上:</label>
+                  <input type="range" id="collageFadeTop" min="0" max="50" value="0">
+                  <span id="collageFadeTopValue">0%</span>
+                </div>
+                <div class="collage-control-row">
+                  <label>下:</label>
+                  <input type="range" id="collageFadeBottom" min="0" max="50" value="0">
+                  <span id="collageFadeBottomValue">0%</span>
+                </div>
+                <button class="collage-btn collage-btn-small collage-btn-primary" id="collageFadeReset">リセット</button>
+              </div>
+
+              <div style="margin-top: 15px; display: flex; gap: 5px; flex-wrap: wrap;">
+                <button class="collage-btn collage-btn-small collage-btn-primary" id="collageBringFront">最前面</button>
+                <button class="collage-btn collage-btn-small collage-btn-primary" id="collageSendBack">最背面</button>
+                <button class="collage-btn collage-btn-small" id="collageDuplicate" style="background:#7c4dff;color:#fff;">複製</button>
+                <button class="collage-btn collage-btn-small" id="collageFlipH" style="background:#555;color:#fff;">左右反転</button>
+                <button class="collage-btn collage-btn-small" id="collageFlipV" style="background:#555;color:#fff;">上下反転</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 15px; color: #888; font-size: 13px;">
+          <strong>操作:</strong> 画像をドラッグで移動 | 角をドラッグでリサイズ | 赤い丸をドラッグで回転 | Delete/Backspaceで削除
+        </div>
+      </div>
+    </div><!-- end collageTab -->
   </div>
 
   <script>
@@ -397,6 +832,7 @@
     const fileInput = document.getElementById('fileInput');
     const mosaicBtn = document.getElementById('mosaicBtn');
     const fillBtn = document.getElementById('fillBtn');
+    const textBtn = document.getElementById('textBtn');
     const mosaicSize = document.getElementById('mosaicSize');
     const sizeValue = document.getElementById('sizeValue');
     const fillColor = document.getElementById('fillColor');
@@ -404,25 +840,255 @@
     const saveBtn = document.getElementById('saveBtn');
     const selectionBox = document.getElementById('selectionBox');
     const info = document.getElementById('info');
+    const textOptions = document.getElementById('textOptions');
+    const textInput = document.getElementById('textInput');
+    const textFont = document.getElementById('textFont');
+    const textSizeInput = document.getElementById('textSize');
+    const textSizeValue = document.getElementById('textSizeValue');
+    const textColor = document.getElementById('textColor');
+    const textBgColor = document.getElementById('textBgColor');
+    const textBgEnabled = document.getElementById('textBgEnabled');
+    const textBold = document.getElementById('textBold');
+    const textBgOpacity = document.getElementById('textBgOpacity');
+    const textBgOpacityValue = document.getElementById('textBgOpacityValue');
+    const textRotation = document.getElementById('textRotation');
+    const textRotationValue = document.getElementById('textRotationValue');
+    const textApplyBtn = document.getElementById('textApplyBtn');
+    const textCancelBtn = document.getElementById('textCancelBtn');
+    const textPreview = document.getElementById('textPreview');
 
-    let mode = 'mosaic'; // 'mosaic' or 'fill'
+    let mode = 'mosaic'; // 'mosaic', 'fill', or 'text'
     let isDrawing = false;
     let startX, startY;
     let history = [];
     let originalImage = null;
 
+    // Text preview state
+    let textPreviewX = 50;
+    let textPreviewY = 50;
+    let isTextDragging = false;
+    let textDragOffsetX = 0;
+    let textDragOffsetY = 0;
+
     // Mode switching
-    mosaicBtn.addEventListener('click', () => {
-      mode = 'mosaic';
-      mosaicBtn.classList.add('active');
-      fillBtn.classList.remove('active');
+    function setMode(newMode) {
+      mode = newMode;
+      mosaicBtn.classList.toggle('active', mode === 'mosaic');
+      fillBtn.classList.toggle('active', mode === 'fill');
+      textBtn.classList.toggle('active', mode === 'text');
+      textOptions.style.display = mode === 'text' ? 'flex' : 'none';
+      canvas.style.cursor = mode === 'text' ? 'default' : 'crosshair';
+
+      if (mode === 'text' && originalImage) {
+        showTextPreview();
+      } else {
+        hideTextPreview();
+      }
+    }
+
+    mosaicBtn.addEventListener('click', () => setMode('mosaic'));
+    fillBtn.addEventListener('click', () => setMode('fill'));
+    textBtn.addEventListener('click', () => setMode('text'));
+
+    // Text size slider
+    textSizeInput.addEventListener('input', (e) => {
+      textSizeValue.textContent = e.target.value;
+      updateTextPreview();
     });
 
-    fillBtn.addEventListener('click', () => {
-      mode = 'fill';
-      fillBtn.classList.add('active');
-      mosaicBtn.classList.remove('active');
+    // Text background opacity slider
+    textBgOpacity.addEventListener('input', (e) => {
+      textBgOpacityValue.textContent = e.target.value;
+      updateTextPreview();
     });
+
+    // Text rotation slider
+    textRotation.addEventListener('input', (e) => {
+      textRotationValue.textContent = e.target.value;
+      updateTextPreview();
+    });
+
+    // Update text preview when any option changes
+    textInput.addEventListener('input', updateTextPreview);
+    textFont.addEventListener('change', updateTextPreview);
+    textColor.addEventListener('input', updateTextPreview);
+    textBgColor.addEventListener('input', updateTextPreview);
+    textBgEnabled.addEventListener('change', updateTextPreview);
+    textBold.addEventListener('change', updateTextPreview);
+
+    // Show text preview
+    function showTextPreview() {
+      if (!originalImage) return;
+      textPreview.style.display = 'block';
+      updateTextPreview();
+    }
+
+    // Hide text preview
+    function hideTextPreview() {
+      textPreview.style.display = 'none';
+    }
+
+    // Update text preview appearance
+    function updateTextPreview() {
+      if (!originalImage || mode !== 'text') return;
+
+      const text = textInput.value || 'テキストを入力...';
+      const fontSize = parseInt(textSizeInput.value);
+      const fontFamily = textFont.value;
+      const bold = textBold.checked ? 'bold ' : '';
+      const color = textColor.value;
+      const bgColor = textBgColor.value;
+      const bgEnabled = textBgEnabled.checked;
+      const bgOpacity = parseInt(textBgOpacity.value) / 100;
+
+      // Calculate scale factor
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = rect.width / canvas.width;
+      const scaleY = rect.height / canvas.height;
+      const displayFontSize = fontSize * scaleY;
+
+      textPreview.textContent = text;
+      textPreview.style.font = `${bold}${displayFontSize}px ${fontFamily}`;
+      textPreview.style.color = color;
+
+      if (bgEnabled) {
+        const r = parseInt(bgColor.slice(1, 3), 16);
+        const g = parseInt(bgColor.slice(3, 5), 16);
+        const b = parseInt(bgColor.slice(5, 7), 16);
+        textPreview.style.backgroundColor = `rgba(${r}, ${g}, ${b}, ${bgOpacity})`;
+      } else {
+        textPreview.style.backgroundColor = 'transparent';
+      }
+
+      // Position relative to canvas
+      const canvasRect = canvas.getBoundingClientRect();
+      const containerRect = canvas.parentElement.getBoundingClientRect();
+      const offsetLeft = canvasRect.left - containerRect.left;
+      const offsetTop = canvasRect.top - containerRect.top;
+
+      textPreview.style.left = (offsetLeft + textPreviewX * scaleX) + 'px';
+      textPreview.style.top = (offsetTop + textPreviewY * scaleY) + 'px';
+
+      // Apply rotation
+      const rotation = parseInt(textRotation.value);
+      textPreview.style.transform = `rotate(${rotation}deg)`;
+      textPreview.style.transformOrigin = 'left top';
+    }
+
+    // Text preview drag
+    textPreview.addEventListener('mousedown', (e) => {
+      if (mode !== 'text') return;
+      isTextDragging = true;
+      textPreview.classList.add('dragging');
+
+      const rect = textPreview.getBoundingClientRect();
+      textDragOffsetX = e.clientX - rect.left;
+      textDragOffsetY = e.clientY - rect.top;
+      e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isTextDragging) return;
+
+      const canvasRect = canvas.getBoundingClientRect();
+      const containerRect = canvas.parentElement.getBoundingClientRect();
+      const offsetLeft = canvasRect.left - containerRect.left;
+      const offsetTop = canvasRect.top - containerRect.top;
+
+      const scaleX = canvas.width / canvasRect.width;
+      const scaleY = canvas.height / canvasRect.height;
+
+      const newLeft = e.clientX - containerRect.left - textDragOffsetX;
+      const newTop = e.clientY - containerRect.top - textDragOffsetY;
+
+      textPreviewX = (newLeft - offsetLeft) * scaleX;
+      textPreviewY = (newTop - offsetTop) * scaleY;
+
+      // Clamp to canvas bounds
+      textPreviewX = Math.max(0, Math.min(canvas.width - 50, textPreviewX));
+      textPreviewY = Math.max(0, Math.min(canvas.height - 20, textPreviewY));
+
+      updateTextPreview();
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (isTextDragging) {
+        isTextDragging = false;
+        textPreview.classList.remove('dragging');
+      }
+    });
+
+    // Apply text button
+    textApplyBtn.addEventListener('click', () => {
+      if (!originalImage) return;
+      applyTextToCanvas();
+    });
+
+    // Cancel text button
+    textCancelBtn.addEventListener('click', () => {
+      textInput.value = '';
+      textPreviewX = 50;
+      textPreviewY = 50;
+      textRotation.value = 0;
+      textRotationValue.textContent = '0';
+      updateTextPreview();
+    });
+
+    // Apply text to canvas
+    function applyTextToCanvas() {
+      const text = textInput.value.trim();
+      if (!text) {
+        alert('テキストを入力してください');
+        return;
+      }
+
+      const fontSize = parseInt(textSizeInput.value);
+      const fontFamily = textFont.value;
+      const bold = textBold.checked ? 'bold ' : '';
+      const rotation = parseInt(textRotation.value);
+
+      ctx.save();
+
+      // Translate to text position and rotate
+      ctx.translate(textPreviewX, textPreviewY);
+      ctx.rotate(rotation * Math.PI / 180);
+
+      ctx.font = `${bold}${fontSize}px ${fontFamily}`;
+      ctx.textBaseline = 'top';
+
+      const metrics = ctx.measureText(text);
+      const textWidth = metrics.width;
+      const textHeight = fontSize * 1.2;
+
+      // Draw background if enabled
+      if (textBgEnabled.checked) {
+        const bgOpacity = parseInt(textBgOpacity.value) / 100;
+        const bgColor = textBgColor.value;
+        const r = parseInt(bgColor.slice(1, 3), 16);
+        const g = parseInt(bgColor.slice(3, 5), 16);
+        const b = parseInt(bgColor.slice(5, 7), 16);
+
+        const padding = 8;
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${bgOpacity})`;
+        ctx.fillRect(-padding, -padding, textWidth + padding * 2, textHeight + padding * 2);
+      }
+
+      // Draw text
+      ctx.fillStyle = textColor.value;
+      ctx.fillText(text, 0, 0);
+
+      ctx.restore();
+
+      saveState();
+
+      // Reset for next text
+      textInput.value = '';
+      textPreviewX = 50;
+      textPreviewY = 50;
+      textRotation.value = 0;
+      textRotationValue.textContent = '0';
+      updateTextPreview();
+    }
 
     // Size slider
     mosaicSize.addEventListener('input', (e) => {
@@ -504,16 +1170,28 @@
     // Mouse events for selection
     canvas.addEventListener('mousedown', (e) => {
       if (!originalImage) return;
-      isDrawing = true;
+
       const rect = canvas.getBoundingClientRect();
       const scaleX = canvas.width / rect.width;
       const scaleY = canvas.height / rect.height;
-      startX = (e.clientX - rect.left) * scaleX;
-      startY = (e.clientY - rect.top) * scaleY;
+      const clickX = (e.clientX - rect.left) * scaleX;
+      const clickY = (e.clientY - rect.top) * scaleY;
+
+      if (mode === 'text') {
+        // Set text position on click
+        textPreviewX = clickX;
+        textPreviewY = clickY;
+        updateTextPreview();
+        return;
+      }
+
+      isDrawing = true;
+      startX = clickX;
+      startY = clickY;
     });
 
     canvas.addEventListener('mousemove', (e) => {
-      if (!isDrawing) return;
+      if (!isDrawing || mode === 'text') return;
       const rect = canvas.getBoundingClientRect();
       const scaleX = canvas.width / rect.width;
       const scaleY = canvas.height / rect.height;
@@ -535,7 +1213,7 @@
     });
 
     canvas.addEventListener('mouseup', (e) => {
-      if (!isDrawing) return;
+      if (!isDrawing || mode === 'text') return;
       isDrawing = false;
       selectionBox.style.display = 'none';
 
@@ -553,7 +1231,7 @@
       if (w > 5 && h > 5) {
         if (mode === 'mosaic') {
           applyMosaic(x, y, w, h);
-        } else {
+        } else if (mode === 'fill') {
           applyFill(x, y, w, h);
         }
         saveState();
@@ -616,6 +1294,8 @@
         mosaicBtn.click();
       } else if (e.key === 'f' || e.key === 'F') {
         fillBtn.click();
+      } else if (e.key === 't' || e.key === 'T') {
+        textBtn.click();
       } else if (e.ctrlKey && e.key === 'z') {
         e.preventDefault();
         undo();
@@ -865,6 +1545,698 @@
     document.addEventListener('mouseup', () => {
       isDraggingCrop = false;
     });
+
+    // ==================== Collage Editor ====================
+    const collageCanvas = document.getElementById('collageCanvas');
+    const collageCtx = collageCanvas.getContext('2d');
+    const collageCanvasWrapper = document.getElementById('collageCanvasWrapper');
+    const collageUpload = document.getElementById('collageUpload');
+    const collageFileInput = document.getElementById('collageFileInput');
+    const collageImageList = document.getElementById('collageImageList');
+    const collageControls = document.getElementById('collageControls');
+    const collageWidthInput = document.getElementById('collageWidth');
+    const collageHeightInput = document.getElementById('collageHeight');
+    const collageBgSelect = document.getElementById('collageBg');
+    const collageBgColorInput = document.getElementById('collageBgColor');
+
+    let collageImages = []; // Array of { id, img, x, y, w, h, rotation, opacity, cropLeft, cropRight, cropTop, cropBottom, flipH, flipV }
+    let selectedImageId = null;
+    let collageIdCounter = 0;
+    let collageDragState = null; // { type: 'move'|'resize'|'rotate', startX, startY, ... }
+
+    // Background color toggle
+    collageBgSelect.addEventListener('change', () => {
+      collageBgColorInput.style.display = collageBgSelect.value === 'custom' ? 'inline-block' : 'none';
+      renderCollage();
+    });
+    collageBgColorInput.addEventListener('input', renderCollage);
+
+    // Canvas size
+    document.getElementById('collageApplySize').addEventListener('click', () => {
+      collageCanvas.width = parseInt(collageWidthInput.value) || 800;
+      collageCanvas.height = parseInt(collageHeightInput.value) || 600;
+      renderCollage();
+    });
+
+    // Save collage
+    document.getElementById('collageSave').addEventListener('click', () => {
+      // Render without selection box for saving
+      renderCollage(false);
+      const link = document.createElement('a');
+      link.download = 'collage.png';
+      link.href = collageCanvas.toDataURL('image/png');
+      link.click();
+      // Re-render with selection box
+      renderCollage(true);
+    });
+
+    // Upload handlers
+    collageUpload.addEventListener('click', () => collageFileInput.click());
+    collageFileInput.addEventListener('change', (e) => {
+      for (const file of e.target.files) {
+        if (file.type.startsWith('image/')) {
+          addCollageImage(file);
+        }
+      }
+      collageFileInput.value = '';
+    });
+    collageUpload.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      collageUpload.classList.add('dragover');
+    });
+    collageUpload.addEventListener('dragleave', () => {
+      collageUpload.classList.remove('dragover');
+    });
+    collageUpload.addEventListener('drop', (e) => {
+      e.preventDefault();
+      collageUpload.classList.remove('dragover');
+      for (const file of e.dataTransfer.files) {
+        if (file.type.startsWith('image/')) {
+          addCollageImage(file);
+        }
+      }
+    });
+
+    function addCollageImage(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const id = ++collageIdCounter;
+          // Scale to fit canvas while maintaining aspect ratio
+          let w = img.width;
+          let h = img.height;
+          const maxSize = Math.min(collageCanvas.width, collageCanvas.height) * 0.5;
+          if (w > maxSize || h > maxSize) {
+            const scale = maxSize / Math.max(w, h);
+            w *= scale;
+            h *= scale;
+          }
+          collageImages.push({
+            id,
+            img,
+            name: file.name,
+            x: (collageCanvas.width - w) / 2,
+            y: (collageCanvas.height - h) / 2,
+            w,
+            h,
+            rotation: 0,
+            opacity: 100,
+            cropLeft: 0,
+            cropRight: 0,
+            cropTop: 0,
+            cropBottom: 0,
+            fadeLeft: 0,
+            fadeRight: 0,
+            fadeTop: 0,
+            fadeBottom: 0,
+            flipH: false,
+            flipV: false
+          });
+          selectedImageId = id;
+          updateCollageImageList();
+          updateCollageControls();
+          renderCollage();
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function updateCollageImageList() {
+      collageImageList.innerHTML = '';
+      collageImages.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = 'collage-image-item' + (item.id === selectedImageId ? ' selected' : '');
+        div.innerHTML = `
+          <img src="${item.img.src}" alt="">
+          <div class="collage-image-item-info">
+            <div class="name">${item.name}</div>
+            <div>${Math.round(item.w)}x${Math.round(item.h)} | ${item.rotation}°</div>
+          </div>
+          <div class="collage-image-item-buttons">
+            <button class="delete" data-id="${item.id}">×</button>
+          </div>
+        `;
+        div.addEventListener('click', (e) => {
+          if (!e.target.classList.contains('delete')) {
+            selectedImageId = item.id;
+            updateCollageImageList();
+            updateCollageControls();
+            renderCollage();
+          }
+        });
+        div.querySelector('.delete').addEventListener('click', () => {
+          collageImages = collageImages.filter(i => i.id !== item.id);
+          if (selectedImageId === item.id) {
+            selectedImageId = collageImages.length > 0 ? collageImages[collageImages.length - 1].id : null;
+          }
+          updateCollageImageList();
+          updateCollageControls();
+          renderCollage();
+        });
+        collageImageList.appendChild(div);
+      });
+    }
+
+    function getSelectedImage() {
+      return collageImages.find(i => i.id === selectedImageId);
+    }
+
+    function updateCollageControls() {
+      const item = getSelectedImage();
+      if (!item) {
+        collageControls.style.display = 'none';
+        return;
+      }
+      collageControls.style.display = 'block';
+      document.getElementById('collageItemX').value = Math.round(item.x);
+      document.getElementById('collageItemY').value = Math.round(item.y);
+      document.getElementById('collageItemW').value = Math.round(item.w);
+      document.getElementById('collageItemH').value = Math.round(item.h);
+      document.getElementById('collageItemRotation').value = item.rotation;
+      document.getElementById('collageItemRotationValue').textContent = item.rotation + '°';
+      document.getElementById('collageItemOpacity').value = item.opacity;
+      document.getElementById('collageItemOpacityValue').textContent = item.opacity + '%';
+      document.getElementById('collageCropLeft').value = item.cropLeft;
+      document.getElementById('collageCropLeftValue').textContent = item.cropLeft + '%';
+      document.getElementById('collageCropRight').value = item.cropRight;
+      document.getElementById('collageCropRightValue').textContent = item.cropRight + '%';
+      document.getElementById('collageCropTop').value = item.cropTop;
+      document.getElementById('collageCropTopValue').textContent = item.cropTop + '%';
+      document.getElementById('collageCropBottom').value = item.cropBottom;
+      document.getElementById('collageCropBottomValue').textContent = item.cropBottom + '%';
+      document.getElementById('collageFadeLeft').value = item.fadeLeft;
+      document.getElementById('collageFadeLeftValue').textContent = item.fadeLeft + '%';
+      document.getElementById('collageFadeRight').value = item.fadeRight;
+      document.getElementById('collageFadeRightValue').textContent = item.fadeRight + '%';
+      document.getElementById('collageFadeTop').value = item.fadeTop;
+      document.getElementById('collageFadeTopValue').textContent = item.fadeTop + '%';
+      document.getElementById('collageFadeBottom').value = item.fadeBottom;
+      document.getElementById('collageFadeBottomValue').textContent = item.fadeBottom + '%';
+    }
+
+    // Control inputs
+    ['collageItemX', 'collageItemY', 'collageItemW', 'collageItemH'].forEach(id => {
+      document.getElementById(id).addEventListener('input', () => {
+        const item = getSelectedImage();
+        if (!item) return;
+        item.x = parseFloat(document.getElementById('collageItemX').value) || 0;
+        item.y = parseFloat(document.getElementById('collageItemY').value) || 0;
+        item.w = parseFloat(document.getElementById('collageItemW').value) || 10;
+        item.h = parseFloat(document.getElementById('collageItemH').value) || 10;
+        renderCollage();
+      });
+    });
+
+    document.getElementById('collageItemRotation').addEventListener('input', (e) => {
+      const item = getSelectedImage();
+      if (!item) return;
+      item.rotation = parseInt(e.target.value);
+      document.getElementById('collageItemRotationValue').textContent = item.rotation + '°';
+      renderCollage();
+    });
+
+    document.getElementById('collageItemOpacity').addEventListener('input', (e) => {
+      const item = getSelectedImage();
+      if (!item) return;
+      item.opacity = parseInt(e.target.value);
+      document.getElementById('collageItemOpacityValue').textContent = item.opacity + '%';
+      renderCollage();
+    });
+
+    // Crop toggle button
+    document.getElementById('collageToggleCrop').addEventListener('click', () => {
+      const cropControls = document.getElementById('collageCropControls');
+      const btn = document.getElementById('collageToggleCrop');
+      if (cropControls.style.display === 'none') {
+        cropControls.style.display = 'block';
+        btn.style.background = '#4fc3f7';
+      } else {
+        cropControls.style.display = 'none';
+        btn.style.background = '#ff6b6b';
+      }
+    });
+
+    // Fade toggle button
+    document.getElementById('collageToggleFade').addEventListener('click', () => {
+      const fadeControls = document.getElementById('collageFadeControls');
+      const btn = document.getElementById('collageToggleFade');
+      if (fadeControls.style.display === 'none') {
+        fadeControls.style.display = 'block';
+        btn.style.background = '#4fc3f7';
+      } else {
+        fadeControls.style.display = 'none';
+        btn.style.background = '#9c27b0';
+      }
+    });
+
+    // Crop controls
+    ['collageCropLeft', 'collageCropRight', 'collageCropTop', 'collageCropBottom'].forEach(id => {
+      document.getElementById(id).addEventListener('input', (e) => {
+        const item = getSelectedImage();
+        if (!item) return;
+        const prop = id.replace('collageCrop', 'crop');
+        item[prop.charAt(0).toLowerCase() + prop.slice(1)] = parseInt(e.target.value);
+        document.getElementById(id + 'Value').textContent = e.target.value + '%';
+        renderCollage();
+      });
+    });
+
+    document.getElementById('collageCropReset').addEventListener('click', () => {
+      const item = getSelectedImage();
+      if (!item) return;
+      item.cropLeft = item.cropRight = item.cropTop = item.cropBottom = 0;
+      updateCollageControls();
+      renderCollage();
+    });
+
+    // Fade controls
+    ['collageFadeLeft', 'collageFadeRight', 'collageFadeTop', 'collageFadeBottom'].forEach(id => {
+      document.getElementById(id).addEventListener('input', (e) => {
+        const item = getSelectedImage();
+        if (!item) return;
+        const prop = id.replace('collageFade', 'fade');
+        item[prop.charAt(0).toLowerCase() + prop.slice(1)] = parseInt(e.target.value);
+        document.getElementById(id + 'Value').textContent = e.target.value + '%';
+        renderCollage();
+      });
+    });
+
+    document.getElementById('collageFadeReset').addEventListener('click', () => {
+      const item = getSelectedImage();
+      if (!item) return;
+      item.fadeLeft = item.fadeRight = item.fadeTop = item.fadeBottom = 0;
+      updateCollageControls();
+      renderCollage();
+    });
+
+    // Z-order controls
+    document.getElementById('collageBringFront').addEventListener('click', () => {
+      const item = getSelectedImage();
+      if (!item) return;
+      collageImages = collageImages.filter(i => i.id !== item.id);
+      collageImages.push(item);
+      updateCollageImageList();
+      renderCollage();
+    });
+
+    document.getElementById('collageSendBack').addEventListener('click', () => {
+      const item = getSelectedImage();
+      if (!item) return;
+      collageImages = collageImages.filter(i => i.id !== item.id);
+      collageImages.unshift(item);
+      updateCollageImageList();
+      renderCollage();
+    });
+
+    document.getElementById('collageDuplicate').addEventListener('click', () => {
+      const item = getSelectedImage();
+      if (!item) return;
+      const newItem = { ...item, id: ++collageIdCounter, x: item.x + 20, y: item.y + 20 };
+      collageImages.push(newItem);
+      selectedImageId = newItem.id;
+      updateCollageImageList();
+      updateCollageControls();
+      renderCollage();
+    });
+
+    document.getElementById('collageFlipH').addEventListener('click', () => {
+      const item = getSelectedImage();
+      if (!item) return;
+      item.flipH = !item.flipH;
+      renderCollage();
+    });
+
+    document.getElementById('collageFlipV').addEventListener('click', () => {
+      const item = getSelectedImage();
+      if (!item) return;
+      item.flipV = !item.flipV;
+      renderCollage();
+    });
+
+    function renderCollage(showSelection = true) {
+      collageCtx.clearRect(0, 0, collageCanvas.width, collageCanvas.height);
+
+      // Draw background
+      const bgValue = collageBgSelect.value;
+      if (bgValue !== 'transparent') {
+        collageCtx.fillStyle = bgValue === 'custom' ? collageBgColorInput.value : bgValue;
+        collageCtx.fillRect(0, 0, collageCanvas.width, collageCanvas.height);
+      }
+
+      // Draw images
+      collageImages.forEach(item => {
+        collageCtx.save();
+
+        // Calculate crop
+        const cropL = item.img.width * (item.cropLeft / 100);
+        const cropR = item.img.width * (item.cropRight / 100);
+        const cropT = item.img.height * (item.cropTop / 100);
+        const cropB = item.img.height * (item.cropBottom / 100);
+        const srcW = item.img.width - cropL - cropR;
+        const srcH = item.img.height - cropT - cropB;
+
+        // Check if fade is needed
+        const hasFade = item.fadeLeft > 0 || item.fadeRight > 0 || item.fadeTop > 0 || item.fadeBottom > 0;
+
+        if (hasFade) {
+          // Create temporary canvas for fade effect
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = Math.ceil(item.w);
+          tempCanvas.height = Math.ceil(item.h);
+          const tempCtx = tempCanvas.getContext('2d');
+
+          // Draw image to temp canvas
+          tempCtx.drawImage(
+            item.img,
+            cropL, cropT, srcW, srcH,
+            0, 0, item.w, item.h
+          );
+
+          // Apply fade using destination-out composite
+          tempCtx.globalCompositeOperation = 'destination-out';
+
+          // Left fade
+          if (item.fadeLeft > 0) {
+            const fadeW = item.w * (item.fadeLeft / 100);
+            const gradient = tempCtx.createLinearGradient(0, 0, fadeW, 0);
+            gradient.addColorStop(0, 'rgba(0,0,0,1)');
+            gradient.addColorStop(1, 'rgba(0,0,0,0)');
+            tempCtx.fillStyle = gradient;
+            tempCtx.fillRect(0, 0, fadeW, item.h);
+          }
+
+          // Right fade
+          if (item.fadeRight > 0) {
+            const fadeW = item.w * (item.fadeRight / 100);
+            const gradient = tempCtx.createLinearGradient(item.w, 0, item.w - fadeW, 0);
+            gradient.addColorStop(0, 'rgba(0,0,0,1)');
+            gradient.addColorStop(1, 'rgba(0,0,0,0)');
+            tempCtx.fillStyle = gradient;
+            tempCtx.fillRect(item.w - fadeW, 0, fadeW, item.h);
+          }
+
+          // Top fade
+          if (item.fadeTop > 0) {
+            const fadeH = item.h * (item.fadeTop / 100);
+            const gradient = tempCtx.createLinearGradient(0, 0, 0, fadeH);
+            gradient.addColorStop(0, 'rgba(0,0,0,1)');
+            gradient.addColorStop(1, 'rgba(0,0,0,0)');
+            tempCtx.fillStyle = gradient;
+            tempCtx.fillRect(0, 0, item.w, fadeH);
+          }
+
+          // Bottom fade
+          if (item.fadeBottom > 0) {
+            const fadeH = item.h * (item.fadeBottom / 100);
+            const gradient = tempCtx.createLinearGradient(0, item.h, 0, item.h - fadeH);
+            gradient.addColorStop(0, 'rgba(0,0,0,1)');
+            gradient.addColorStop(1, 'rgba(0,0,0,0)');
+            tempCtx.fillStyle = gradient;
+            tempCtx.fillRect(0, item.h - fadeH, item.w, fadeH);
+          }
+
+          // Draw temp canvas to main canvas with transforms
+          collageCtx.globalAlpha = item.opacity / 100;
+          collageCtx.translate(item.x + item.w / 2, item.y + item.h / 2);
+          collageCtx.rotate(item.rotation * Math.PI / 180);
+          collageCtx.scale(item.flipH ? -1 : 1, item.flipV ? -1 : 1);
+          collageCtx.drawImage(tempCanvas, -item.w / 2, -item.h / 2);
+        } else {
+          // No fade, draw directly
+          collageCtx.globalAlpha = item.opacity / 100;
+          collageCtx.translate(item.x + item.w / 2, item.y + item.h / 2);
+          collageCtx.rotate(item.rotation * Math.PI / 180);
+          collageCtx.scale(item.flipH ? -1 : 1, item.flipV ? -1 : 1);
+
+          collageCtx.drawImage(
+            item.img,
+            cropL, cropT, srcW, srcH,
+            -item.w / 2, -item.h / 2, item.w, item.h
+          );
+        }
+
+        collageCtx.restore();
+      });
+
+      // Draw selection box for selected image
+      if (showSelection) {
+        const selected = getSelectedImage();
+        if (selected) {
+          drawSelectionHandles(selected);
+        }
+      }
+    }
+
+    function drawSelectionHandles(item) {
+      collageCtx.save();
+      collageCtx.translate(item.x + item.w / 2, item.y + item.h / 2);
+      collageCtx.rotate(item.rotation * Math.PI / 180);
+
+      // Selection border
+      collageCtx.strokeStyle = '#4fc3f7';
+      collageCtx.lineWidth = 2;
+      collageCtx.setLineDash([5, 5]);
+      collageCtx.strokeRect(-item.w / 2, -item.h / 2, item.w, item.h);
+      collageCtx.setLineDash([]);
+
+      // Corner handles
+      const handleSize = 8;
+      collageCtx.fillStyle = '#4fc3f7';
+      const corners = [
+        [-item.w / 2, -item.h / 2],
+        [item.w / 2, -item.h / 2],
+        [-item.w / 2, item.h / 2],
+        [item.w / 2, item.h / 2]
+      ];
+      corners.forEach(([cx, cy]) => {
+        collageCtx.fillRect(cx - handleSize / 2, cy - handleSize / 2, handleSize, handleSize);
+      });
+
+      // Rotation handle
+      collageCtx.fillStyle = '#ff6b6b';
+      collageCtx.beginPath();
+      collageCtx.arc(0, -item.h / 2 - 25, 8, 0, Math.PI * 2);
+      collageCtx.fill();
+
+      // Line to rotation handle
+      collageCtx.strokeStyle = '#ff6b6b';
+      collageCtx.lineWidth = 1;
+      collageCtx.beginPath();
+      collageCtx.moveTo(0, -item.h / 2);
+      collageCtx.lineTo(0, -item.h / 2 - 25);
+      collageCtx.stroke();
+
+      collageCtx.restore();
+    }
+
+    // Mouse interaction on canvas
+    collageCanvas.addEventListener('mousedown', (e) => {
+      const rect = collageCanvas.getBoundingClientRect();
+      const scaleX = collageCanvas.width / rect.width;
+      const scaleY = collageCanvas.height / rect.height;
+      const mx = (e.clientX - rect.left) * scaleX;
+      const my = (e.clientY - rect.top) * scaleY;
+
+      const selected = getSelectedImage();
+
+      // Check if clicking on handles of selected image
+      if (selected) {
+        const hit = getHandleAt(selected, mx, my);
+        if (hit) {
+          collageDragState = {
+            type: hit,
+            startX: mx,
+            startY: my,
+            origX: selected.x,
+            origY: selected.y,
+            origW: selected.w,
+            origH: selected.h,
+            origRotation: selected.rotation
+          };
+          return;
+        }
+      }
+
+      // Check if clicking on an image (reverse order for top-most first)
+      for (let i = collageImages.length - 1; i >= 0; i--) {
+        const item = collageImages[i];
+        if (isPointInImage(mx, my, item)) {
+          selectedImageId = item.id;
+          updateCollageImageList();
+          updateCollageControls();
+          renderCollage();
+
+          collageDragState = {
+            type: 'move',
+            startX: mx,
+            startY: my,
+            origX: item.x,
+            origY: item.y
+          };
+          return;
+        }
+      }
+
+      // Clicked on empty space - deselect
+      selectedImageId = null;
+      updateCollageImageList();
+      updateCollageControls();
+      renderCollage();
+    });
+
+    collageCanvas.addEventListener('mousemove', (e) => {
+      if (!collageDragState) return;
+
+      const rect = collageCanvas.getBoundingClientRect();
+      const scaleX = collageCanvas.width / rect.width;
+      const scaleY = collageCanvas.height / rect.height;
+      const mx = (e.clientX - rect.left) * scaleX;
+      const my = (e.clientY - rect.top) * scaleY;
+
+      const item = getSelectedImage();
+      if (!item) return;
+
+      const dx = mx - collageDragState.startX;
+      const dy = my - collageDragState.startY;
+
+      if (collageDragState.type === 'move') {
+        item.x = collageDragState.origX + dx;
+        item.y = collageDragState.origY + dy;
+      } else if (collageDragState.type === 'rotate') {
+        const cx = item.x + item.w / 2;
+        const cy = item.y + item.h / 2;
+        const angle = Math.atan2(my - cy, mx - cx) * 180 / Math.PI + 90;
+        item.rotation = Math.round(angle);
+        if (item.rotation > 180) item.rotation -= 360;
+        if (item.rotation < -180) item.rotation += 360;
+      } else if (collageDragState.type.startsWith('resize')) {
+        // Get corner being dragged
+        const corner = collageDragState.type.split('-')[1];
+        const rad = -item.rotation * Math.PI / 180;
+        const cos = Math.cos(rad);
+        const sin = Math.sin(rad);
+
+        // Transform mouse delta to local coordinates
+        const ldx = dx * cos - dy * sin;
+        const ldy = dx * sin + dy * cos;
+
+        // Calculate aspect ratio
+        const aspectRatio = collageDragState.origW / collageDragState.origH;
+
+        let newW = collageDragState.origW;
+        let newH = collageDragState.origH;
+        let newX = collageDragState.origX;
+        let newY = collageDragState.origY;
+
+        // Use the larger delta to maintain aspect ratio
+        const delta = Math.abs(ldx) > Math.abs(ldy) ? ldx : ldy * aspectRatio;
+
+        if (corner === 'br') {
+          newW = Math.max(20, collageDragState.origW + delta);
+          newH = newW / aspectRatio;
+        } else if (corner === 'bl') {
+          newW = Math.max(20, collageDragState.origW - delta);
+          newH = newW / aspectRatio;
+          newX = collageDragState.origX + (collageDragState.origW - newW);
+        } else if (corner === 'tr') {
+          newW = Math.max(20, collageDragState.origW + delta);
+          newH = newW / aspectRatio;
+          newY = collageDragState.origY + (collageDragState.origH - newH);
+        } else if (corner === 'tl') {
+          newW = Math.max(20, collageDragState.origW - delta);
+          newH = newW / aspectRatio;
+          newX = collageDragState.origX + (collageDragState.origW - newW);
+          newY = collageDragState.origY + (collageDragState.origH - newH);
+        }
+
+        item.w = newW;
+        item.h = newH;
+        item.x = newX;
+        item.y = newY;
+      }
+
+      updateCollageControls();
+      renderCollage();
+    });
+
+    collageCanvas.addEventListener('mouseup', () => {
+      collageDragState = null;
+    });
+
+    collageCanvas.addEventListener('mouseleave', () => {
+      collageDragState = null;
+    });
+
+    function isPointInImage(px, py, item) {
+      // Transform point to image's local coordinate system
+      const cx = item.x + item.w / 2;
+      const cy = item.y + item.h / 2;
+      const rad = -item.rotation * Math.PI / 180;
+      const cos = Math.cos(rad);
+      const sin = Math.sin(rad);
+      const dx = px - cx;
+      const dy = py - cy;
+      const localX = dx * cos - dy * sin;
+      const localY = dx * sin + dy * cos;
+
+      return Math.abs(localX) <= item.w / 2 && Math.abs(localY) <= item.h / 2;
+    }
+
+    function getHandleAt(item, px, py) {
+      const cx = item.x + item.w / 2;
+      const cy = item.y + item.h / 2;
+      const rad = -item.rotation * Math.PI / 180;
+      const cos = Math.cos(rad);
+      const sin = Math.sin(rad);
+      const dx = px - cx;
+      const dy = py - cy;
+      const localX = dx * cos - dy * sin;
+      const localY = dx * sin + dy * cos;
+
+      const handleSize = 12;
+
+      // Check rotation handle
+      if (Math.abs(localX) < handleSize && Math.abs(localY + item.h / 2 + 25) < handleSize) {
+        return 'rotate';
+      }
+
+      // Check corner handles
+      const corners = [
+        { name: 'tl', x: -item.w / 2, y: -item.h / 2 },
+        { name: 'tr', x: item.w / 2, y: -item.h / 2 },
+        { name: 'bl', x: -item.w / 2, y: item.h / 2 },
+        { name: 'br', x: item.w / 2, y: item.h / 2 }
+      ];
+
+      for (const corner of corners) {
+        if (Math.abs(localX - corner.x) < handleSize && Math.abs(localY - corner.y) < handleSize) {
+          return 'resize-' + corner.name;
+        }
+      }
+
+      return null;
+    }
+
+    // Keyboard delete
+    document.addEventListener('keydown', (e) => {
+      // Only handle delete if collage tab is active and an image is selected
+      const collageTabActive = document.getElementById('collageTab').classList.contains('active');
+      if (collageTabActive && selectedImageId && (e.key === 'Delete' || e.key === 'Backspace')) {
+        // Prevent if focus is on an input
+        if (e.target.tagName === 'INPUT') return;
+        e.preventDefault();
+        collageImages = collageImages.filter(i => i.id !== selectedImageId);
+        selectedImageId = collageImages.length > 0 ? collageImages[collageImages.length - 1].id : null;
+        updateCollageImageList();
+        updateCollageControls();
+        renderCollage();
+      }
+    });
+
+    // Initial render
+    renderCollage();
   </script>
 </body>
 </html>
