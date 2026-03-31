@@ -3,7 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Image Editor - Mosaic & Fill & Fanza & Collage</title>
+  <title>画像エディター - モザイク・FANZA変換・コラージュ | SF Create</title>
+  <meta name="description" content="ブラウザで動作する無料画像編集ツール。モザイク処理、塗りつぶし、FANZA形式変換、コラージュ作成が可能。同人サークル向け。">
+  <meta property="og:title" content="画像エディター | SF Create">
+  <meta property="og:description" content="無料オンライン画像編集ツール - モザイク・FANZA変換・コラージュ">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://sfc-game.com/tools/image-editor/">
+  <meta property="og:site_name" content="SF Create">
+  <link rel="canonical" href="https://sfc-game.com/tools/image-editor/">
   <style>
     * {
       box-sizing: border-box;
@@ -531,9 +538,194 @@
       border: 2px solid #4fc3f7;
       pointer-events: none;
     }
+    /* Background Remover styles */
+    .bgremove-container {
+      background: #16213e;
+      border-radius: 8px;
+      padding: 20px;
+    }
+    .bgremove-upload {
+      border: 2px dashed #4fc3f7;
+      border-radius: 8px;
+      padding: 40px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 20px;
+    }
+    .bgremove-upload:hover {
+      background: rgba(79, 195, 247, 0.1);
+    }
+    .bgremove-upload.dragover {
+      background: rgba(79, 195, 247, 0.2);
+      border-color: #29b6f6;
+    }
+    .bgremove-preview {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .bgremove-preview-item {
+      background: #0f0f1a;
+      border-radius: 8px;
+      padding: 15px;
+      text-align: center;
+      flex: 1;
+      min-width: 300px;
+      max-width: 500px;
+    }
+    .bgremove-preview-item h4 {
+      margin-bottom: 10px;
+      color: #4fc3f7;
+    }
+    .bgremove-preview-item canvas {
+      max-width: 100%;
+      border: 2px solid #333;
+    }
+    .bgremove-canvas-wrapper {
+      background: repeating-conic-gradient(#333 0% 25%, #444 0% 50%) 50% / 20px 20px;
+      display: inline-block;
+      border-radius: 4px;
+    }
+    .bgremove-controls {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .bgremove-controls label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .bgremove-controls input[type="range"] {
+      width: 150px;
+    }
+    .bgremove-controls select {
+      padding: 8px;
+      background: #0f0f1a;
+      border: 1px solid #333;
+      border-radius: 4px;
+      color: #fff;
+    }
+    .bgremove-btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .bgremove-btn-primary {
+      background: #4fc3f7;
+      color: #1a1a2e;
+    }
+    .bgremove-btn-primary:hover {
+      background: #29b6f6;
+    }
+    .bgremove-btn-primary:disabled {
+      background: #555;
+      cursor: not-allowed;
+    }
+    .bgremove-btn-success {
+      background: #66bb6a;
+      color: #fff;
+    }
+    .bgremove-btn-success:hover {
+      background: #4caf50;
+    }
+    .bgremove-info {
+      background: #0f0f1a;
+      padding: 10px 15px;
+      border-radius: 5px;
+      font-size: 13px;
+      color: #aaa;
+      margin-top: 10px;
+    }
+    .bgremove-info strong {
+      color: #4fc3f7;
+    }
+    .bgremove-loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 20px;
+      color: #4fc3f7;
+    }
+    .bgremove-loading .spinner {
+      width: 24px;
+      height: 24px;
+      border: 3px solid #333;
+      border-top-color: #4fc3f7;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .color-picker-btn {
+      width: 30px;
+      height: 30px;
+      border: 2px solid #fff;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .color-picker-btn:hover {
+      transform: scale(1.1);
+    }
+    .color-picker-btn.active {
+      box-shadow: 0 0 8px #4fc3f7;
+    }
+    /* Fullscreen editor overlay */
+    .bgremove-fullscreen-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.95);
+      z-index: 9999;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .bgremove-fullscreen-overlay.active {
+      display: flex;
+    }
+    .bgremove-fullscreen-toolbar {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .bgremove-fullscreen-canvas-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      max-height: calc(100vh - 150px);
+      overflow: hidden;
+    }
+    .bgremove-fullscreen-canvas-wrapper canvas {
+      max-width: 100%;
+      max-height: 100%;
+      background: repeating-conic-gradient(#333 0% 25%, #444 0% 50%) 50% / 20px 20px;
+      border: 2px solid #4fc3f7;
+    }
   </style>
 </head>
 <body>
+  <div style="text-align:center;padding:10px;background:#16213e;margin-bottom:10px;">
+    <a href="/" style="color:#4fc3f7;text-decoration:none;">← SF Create トップページ</a>
+  </div>
   <div class="container">
     <h1>Image Editor</h1>
 
@@ -541,6 +733,7 @@
       <button class="tab-btn active" data-tab="editor">🔲 モザイク・塗りつぶし</button>
       <button class="tab-btn" data-tab="fanza">📸 Fanza変換</button>
       <button class="tab-btn" data-tab="collage">🖼️ コラージュ</button>
+      <button class="tab-btn" data-tab="bgremove">✂️ 背景除去</button>
     </div>
 
     <div id="editorTab" class="tab-content active">
@@ -552,6 +745,7 @@
       <button id="mosaicBtn" class="active">🔲 モザイク</button>
       <button id="fillBtn">🎨 塗りつぶし</button>
       <button id="textBtn">📝 テキスト</button>
+      <button id="retouchBtn">🖌️ レタッチ</button>
       <div class="options">
         <label>
           サイズ: <span id="sizeValue">10</span>
@@ -611,6 +805,24 @@
         <button id="textApplyBtn" style="background:#66bb6a;color:#fff;">✓ 確定</button>
         <button id="textCancelBtn" style="background:#ff6b6b;color:#fff;">✕ キャンセル</button>
       </div>
+      <div class="options" id="retouchOptions" style="display:none;">
+        <label>
+          ブラシサイズ: <span id="brushSizeValue">10</span>
+          <input type="range" id="brushSize" min="1" max="100" value="10">
+        </label>
+        <label>
+          硬さ: <span id="brushHardnessValue">100</span>%
+          <input type="range" id="brushHardness" min="0" max="100" value="100">
+        </label>
+        <label>
+          不透明度: <span id="brushOpacityValue">100</span>%
+          <input type="range" id="brushOpacity" min="1" max="100" value="100">
+        </label>
+        <label>
+          色:
+          <input type="color" id="brushColor" value="#000000">
+        </label>
+      </div>
       <button id="undoBtn" disabled>↩ 戻す</button>
       <button id="saveBtn" disabled>💾 保存</button>
     </div>
@@ -629,6 +841,7 @@
         <li><kbd>M</kbd> モザイクモード</li>
         <li><kbd>F</kbd> 塗りつぶしモード</li>
         <li><kbd>T</kbd> テキストモード</li>
+        <li><kbd>R</kbd> レタッチモード</li>
         <li><kbd>Ctrl+Z</kbd> 元に戻す</li>
         <li><kbd>Ctrl+S</kbd> 保存</li>
         <li><kbd>↑</kbd><kbd>↓</kbd> サイズ変更</li>
@@ -648,8 +861,10 @@
           <label>
             出力形式:
             <select id="fanzaOutputType" style="padding: 8px; background: #0f0f1a; color: #fff; border: 1px solid #333; border-radius: 4px;">
-              <option value="2:3">サンプル画像 (2:3)</option>
+              <option value="3:2">サンプル画像 (3:2)</option>
+              <option value="2:3">縦長 (2:3)</option>
               <option value="1:1">サムネイル (100x100)</option>
+              <option value="4:3">パッケージ (560x420)</option>
             </select>
           </label>
           <label>
@@ -733,6 +948,30 @@
             </div>
 
             <div class="collage-controls" id="collageControls" style="display:none;">
+              <!-- Multiple selection controls -->
+              <div id="collageAlignControls" style="display:none;">
+                <h4>複数選択 (<span id="collageSelectionCount">0</span>枚)</h4>
+                <div style="margin-bottom:10px;">
+                  <span style="font-size:12px;color:#888;">整列:</span>
+                  <div style="display:flex;gap:4px;margin-top:5px;flex-wrap:wrap;">
+                    <button class="collage-btn collage-btn-small" id="alignTop" title="上端揃え">↑上</button>
+                    <button class="collage-btn collage-btn-small" id="alignMiddleV" title="垂直中央">⊕縦</button>
+                    <button class="collage-btn collage-btn-small" id="alignBottom" title="下端揃え">↓下</button>
+                    <button class="collage-btn collage-btn-small" id="alignLeft" title="左端揃え">←左</button>
+                    <button class="collage-btn collage-btn-small" id="alignMiddleH" title="水平中央">⊕横</button>
+                    <button class="collage-btn collage-btn-small" id="alignRight" title="右端揃え">→右</button>
+                  </div>
+                </div>
+                <div style="margin-bottom:10px;">
+                  <span style="font-size:12px;color:#888;">等間隔:</span>
+                  <div style="display:flex;gap:4px;margin-top:5px;">
+                    <button class="collage-btn collage-btn-small" id="distributeH" title="横等間隔(3枚以上)">⇔横</button>
+                    <button class="collage-btn collage-btn-small" id="distributeV" title="縦等間隔(3枚以上)">⇕縦</button>
+                  </div>
+                </div>
+              </div>
+              <!-- Single selection controls -->
+              <div id="collageSingleControls">
               <h4>選択中の画像</h4>
               <div class="collage-control-row">
                 <label>X:</label>
@@ -815,15 +1054,124 @@
                 <button class="collage-btn collage-btn-small" id="collageFlipH" style="background:#555;color:#fff;">左右反転</button>
                 <button class="collage-btn collage-btn-small" id="collageFlipV" style="background:#555;color:#fff;">上下反転</button>
               </div>
+              </div><!-- end collageSingleControls -->
             </div>
           </div>
         </div>
 
         <div style="margin-top: 15px; color: #888; font-size: 13px;">
-          <strong>操作:</strong> 画像をドラッグで移動 | 角をドラッグでリサイズ | 赤い丸をドラッグで回転 | Delete/Backspaceで削除
+          <strong>操作:</strong> ドラッグで移動 | 角でリサイズ | 赤い丸で回転 | Delete/Backspaceで削除<br>
+          <strong>複数選択:</strong> Ctrl/Cmd+クリック | Ctrl/Cmd+A (全選択) | Esc (解除)
         </div>
       </div>
     </div><!-- end collageTab -->
+
+    <div id="bgremoveTab" class="tab-content">
+      <div class="bgremove-container">
+        <div class="bgremove-upload" id="bgremoveUpload">
+          <p style="font-size: 18px; margin-bottom: 10px;">📁 画像をドラッグ&ドロップ</p>
+          <p style="color: #888;">または クリックして選択</p>
+          <input type="file" id="bgremoveFileInput" accept="image/*" style="display:none;">
+        </div>
+
+        <div class="bgremove-controls" id="bgremoveControls" style="display:none;">
+          <label>
+            除去方式:
+            <select id="bgremoveMethod">
+              <option value="color">色指定</option>
+              <option value="edge">エッジ検出（自動）</option>
+            </select>
+          </label>
+          <div id="bgremoveColorOptions">
+            <label>
+              除去する色:
+              <input type="color" id="bgremoveColor" value="#ffffff">
+              <span style="font-size:12px;color:#888;">または画像をクリック</span>
+            </label>
+            <label>
+              許容値: <span id="bgremoveToleranceValue">30</span>
+              <input type="range" id="bgremovetolerance" min="0" max="100" value="30">
+            </label>
+          </div>
+          <div id="bgremoveEdgeOptions" style="display:none;">
+            <label>
+              しきい値: <span id="bgremoveThresholdValue">10</span>
+              <input type="range" id="bgremoveThreshold" min="1" max="50" value="10">
+            </label>
+          </div>
+          <button class="bgremove-btn bgremove-btn-primary" id="bgremoveProcess">✂️ 背景を除去</button>
+        </div>
+
+        <div class="bgremove-loading" id="bgremoveLoading" style="display:none;">
+          <div class="spinner"></div>
+          <span>処理中...</span>
+        </div>
+
+        <div class="bgremove-preview" id="bgremovePreview" style="display:none;">
+          <div class="bgremove-preview-item">
+            <h4>元画像</h4>
+            <canvas id="bgremoveSourceCanvas"></canvas>
+            <div class="bgremove-info">クリックで除去する色を選択</div>
+          </div>
+          <div class="bgremove-preview-item">
+            <h4>結果（透明背景）</h4>
+            <div class="bgremove-canvas-wrapper">
+              <canvas id="bgremoveOutputCanvas"></canvas>
+            </div>
+            <div style="margin-top: 10px; display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap;" id="bgremoveModeButtons" style="display:none;">
+              <button class="bgremove-btn bgremove-btn-small" id="bgremoveClickMode" style="background:#4fc3f7;color:#1a1a2e;padding:8px 16px;">🖱️ クリック</button>
+              <button class="bgremove-btn bgremove-btn-small" id="bgremovedrawMode" style="background:#555;color:#fff;padding:8px 16px;">🖊️ ペン</button>
+              <button class="bgremove-btn bgremove-btn-small" id="bgremoveFullscreenBtn" style="background:#7c4dff;color:#fff;padding:8px 16px;">⛶ 最大化</button>
+              <label id="bgremovedrawSizeLabel" style="display:none;">
+                サイズ: <span id="bgremovedrawSizeValue">10</span>
+                <input type="range" id="bgremovedrawSize" min="2" max="50" value="10" style="width:80px;">
+              </label>
+            </div>
+            <div class="bgremove-info" id="bgremoveOutputInfo" style="display:none;">
+              <strong>💡 クリックモード</strong>: クリックした領域を透明にします<br>
+              <strong>🖊️ ペンモード</strong>: なぞった部分を透明にします
+            </div>
+          </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 20px; display: flex; gap: 10px; justify-content: center;" id="bgremoveActions">
+          <button class="bgremove-btn" id="bgremoveUndo" style="display:none; background:#555; color:#fff;">
+            ↩ 戻す
+          </button>
+          <button class="bgremove-btn bgremove-btn-success" id="bgremoveDownload" style="display:none;">
+            💾 PNGをダウンロード
+          </button>
+        </div>
+
+        <div class="bgremove-info" style="margin-top: 20px;">
+          <strong>使い方:</strong><br>
+          1. 画像をアップロード<br>
+          2. 「色指定」: 除去したい色を選択（画像をクリックまたはカラーピッカーで選択）<br>
+          3. 「エッジ検出」: 背景を自動検出して除去<br>
+          4. 許容値/しきい値を調整して範囲を調整<br>
+          5. 「背景を除去」ボタンをクリック<br>
+          6. 結果をPNGでダウンロード
+        </div>
+      </div>
+    </div><!-- end bgremoveTab -->
+  </div>
+
+  <!-- Fullscreen editor overlay -->
+  <div class="bgremove-fullscreen-overlay" id="bgremoveFullscreenOverlay">
+    <div class="bgremove-fullscreen-toolbar">
+      <button class="bgremove-btn bgremove-btn-small" id="fsClickMode" style="background:#4fc3f7;color:#1a1a2e;padding:8px 16px;">🖱️ クリック</button>
+      <button class="bgremove-btn bgremove-btn-small" id="fsdrawMode" style="background:#555;color:#fff;padding:8px 16px;">🖊️ ペン</button>
+      <label id="fsdrawSizeLabel" style="display:none;">
+        サイズ: <span id="fsdrawSizeValue">10</span>
+        <input type="range" id="fsdrawSize" min="2" max="50" value="10" style="width:100px;">
+      </label>
+      <button class="bgremove-btn" id="fsUndo" style="background:#555;color:#fff;padding:8px 16px;">↩ 戻す (Ctrl+Z)</button>
+      <button class="bgremove-btn bgremove-btn-success" id="fsDownload" style="padding:8px 16px;">💾 保存</button>
+      <button class="bgremove-btn" id="fsClose" style="background:#ff6b6b;color:#fff;padding:8px 16px;">✕ 閉じる (Esc)</button>
+    </div>
+    <div class="bgremove-fullscreen-canvas-wrapper">
+      <canvas id="bgremoveFullscreenCanvas"></canvas>
+    </div>
   </div>
 
   <script>
@@ -833,6 +1181,15 @@
     const mosaicBtn = document.getElementById('mosaicBtn');
     const fillBtn = document.getElementById('fillBtn');
     const textBtn = document.getElementById('textBtn');
+    const retouchBtn = document.getElementById('retouchBtn');
+    const retouchOptions = document.getElementById('retouchOptions');
+    const brushSize = document.getElementById('brushSize');
+    const brushSizeValue = document.getElementById('brushSizeValue');
+    const brushHardness = document.getElementById('brushHardness');
+    const brushHardnessValue = document.getElementById('brushHardnessValue');
+    const brushOpacity = document.getElementById('brushOpacity');
+    const brushOpacityValue = document.getElementById('brushOpacityValue');
+    const brushColor = document.getElementById('brushColor');
     const mosaicSize = document.getElementById('mosaicSize');
     const sizeValue = document.getElementById('sizeValue');
     const fillColor = document.getElementById('fillColor');
@@ -857,11 +1214,15 @@
     const textCancelBtn = document.getElementById('textCancelBtn');
     const textPreview = document.getElementById('textPreview');
 
-    let mode = 'mosaic'; // 'mosaic', 'fill', or 'text'
+    let mode = 'mosaic'; // 'mosaic', 'fill', 'text', or 'retouch'
     let isDrawing = false;
     let startX, startY;
     let history = [];
     let originalImage = null;
+
+    // Retouch state
+    let isPainting = false;
+    let lastPaintX, lastPaintY;
 
     // Text preview state
     let textPreviewX = 50;
@@ -876,8 +1237,17 @@
       mosaicBtn.classList.toggle('active', mode === 'mosaic');
       fillBtn.classList.toggle('active', mode === 'fill');
       textBtn.classList.toggle('active', mode === 'text');
+      retouchBtn.classList.toggle('active', mode === 'retouch');
       textOptions.style.display = mode === 'text' ? 'flex' : 'none';
-      canvas.style.cursor = mode === 'text' ? 'default' : 'crosshair';
+      retouchOptions.style.display = mode === 'retouch' ? 'flex' : 'none';
+
+      if (mode === 'retouch') {
+        canvas.style.cursor = 'crosshair';
+      } else if (mode === 'text') {
+        canvas.style.cursor = 'default';
+      } else {
+        canvas.style.cursor = 'crosshair';
+      }
 
       if (mode === 'text' && originalImage) {
         showTextPreview();
@@ -889,6 +1259,18 @@
     mosaicBtn.addEventListener('click', () => setMode('mosaic'));
     fillBtn.addEventListener('click', () => setMode('fill'));
     textBtn.addEventListener('click', () => setMode('text'));
+    retouchBtn.addEventListener('click', () => setMode('retouch'));
+
+    // Retouch slider event listeners
+    brushSize.addEventListener('input', (e) => {
+      brushSizeValue.textContent = e.target.value;
+    });
+    brushHardness.addEventListener('input', (e) => {
+      brushHardnessValue.textContent = e.target.value;
+    });
+    brushOpacity.addEventListener('input', (e) => {
+      brushOpacityValue.textContent = e.target.value;
+    });
 
     // Text size slider
     textSizeInput.addEventListener('input', (e) => {
@@ -1167,6 +1549,58 @@
 
     saveBtn.addEventListener('click', saveImage);
 
+    // Retouch brush drawing function
+    function drawBrushStroke(fromX, fromY, toX, toY) {
+      const size = parseInt(brushSize.value);
+      const hardness = parseInt(brushHardness.value) / 100;
+      const opacity = parseInt(brushOpacity.value) / 100;
+      const color = brushColor.value;
+
+      ctx.save();
+      ctx.globalAlpha = opacity;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      if (hardness < 1) {
+        // Soft brush using radial gradient
+        const steps = Math.max(1, Math.ceil(Math.hypot(toX - fromX, toY - fromY) / (size * 0.3)));
+        for (let i = 0; i <= steps; i++) {
+          const t = i / steps;
+          const x = fromX + (toX - fromX) * t;
+          const y = fromY + (toY - fromY) * t;
+
+          const gradient = ctx.createRadialGradient(x, y, 0, x, y, size / 2);
+          const r = parseInt(color.slice(1, 3), 16);
+          const g = parseInt(color.slice(3, 5), 16);
+          const b = parseInt(color.slice(5, 7), 16);
+
+          // Inner opacity based on hardness
+          const innerOpacity = opacity;
+          const outerOpacity = opacity * (1 - hardness);
+
+          gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${innerOpacity})`);
+          gradient.addColorStop(hardness, `rgba(${r}, ${g}, ${b}, ${innerOpacity})`);
+          gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, ${outerOpacity})`);
+
+          ctx.globalAlpha = 1;
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(x, y, size / 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      } else {
+        // Hard brush using simple line
+        ctx.strokeStyle = color;
+        ctx.lineWidth = size;
+        ctx.beginPath();
+        ctx.moveTo(fromX, fromY);
+        ctx.lineTo(toX, toY);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
     // Mouse events for selection
     canvas.addEventListener('mousedown', (e) => {
       if (!originalImage) return;
@@ -1185,18 +1619,35 @@
         return;
       }
 
+      if (mode === 'retouch') {
+        isPainting = true;
+        lastPaintX = clickX;
+        lastPaintY = clickY;
+        // Draw initial point
+        drawBrushStroke(clickX, clickY, clickX, clickY);
+        return;
+      }
+
       isDrawing = true;
       startX = clickX;
       startY = clickY;
     });
 
     canvas.addEventListener('mousemove', (e) => {
-      if (!isDrawing || mode === 'text') return;
       const rect = canvas.getBoundingClientRect();
       const scaleX = canvas.width / rect.width;
       const scaleY = canvas.height / rect.height;
       const currentX = (e.clientX - rect.left) * scaleX;
       const currentY = (e.clientY - rect.top) * scaleY;
+
+      if (mode === 'retouch' && isPainting) {
+        drawBrushStroke(lastPaintX, lastPaintY, currentX, currentY);
+        lastPaintX = currentX;
+        lastPaintY = currentY;
+        return;
+      }
+
+      if (!isDrawing || mode === 'text') return;
 
       // Show selection box
       const boxRect = canvas.getBoundingClientRect();
@@ -1213,6 +1664,12 @@
     });
 
     canvas.addEventListener('mouseup', (e) => {
+      if (mode === 'retouch' && isPainting) {
+        isPainting = false;
+        saveState();
+        return;
+      }
+
       if (!isDrawing || mode === 'text') return;
       isDrawing = false;
       selectionBox.style.display = 'none';
@@ -1234,6 +1691,13 @@
         } else if (mode === 'fill') {
           applyFill(x, y, w, h);
         }
+        saveState();
+      }
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+      if (mode === 'retouch' && isPainting) {
+        isPainting = false;
         saveState();
       }
     });
@@ -1296,6 +1760,8 @@
         fillBtn.click();
       } else if (e.key === 't' || e.key === 'T') {
         textBtn.click();
+      } else if (e.key === 'r' || e.key === 'R') {
+        retouchBtn.click();
       } else if (e.ctrlKey && e.key === 'z') {
         e.preventDefault();
         undo();
@@ -1391,17 +1857,30 @@
       if (!fanzaImage) return;
 
       const outputType = fanzaOutputType.value;
-      const isThumb = outputType === '1:1';
 
       // Calculate crop dimensions based on aspect ratio
       let targetRatio, outputWidth, outputHeight;
-      if (isThumb) {
+      if (outputType === '1:1') {
         targetRatio = 1;
         outputWidth = 100;
         outputHeight = 100;
-      } else {
+      } else if (outputType === '4:3') {
+        targetRatio = 4 / 3;
+        // Package image: max 560x420
+        outputWidth = Math.min(560, fanzaImage.width);
+        outputHeight = Math.round(outputWidth / targetRatio);
+        if (outputHeight > 420) {
+          outputHeight = 420;
+          outputWidth = Math.round(outputHeight * targetRatio);
+        }
+      } else if (outputType === '2:3') {
+        // 縦長
         targetRatio = 2 / 3;
-        // For 2:3, we'll output at a reasonable size, max 800 width
+        outputWidth = Math.min(800, fanzaImage.width);
+        outputHeight = Math.round(outputWidth / targetRatio);
+      } else {
+        // 3:2 (サンプル画像)
+        targetRatio = 3 / 2;
         outputWidth = Math.min(800, fanzaImage.width);
         outputHeight = Math.round(outputWidth / targetRatio);
       }
@@ -1410,13 +1889,23 @@
       let cropWidth, cropHeight;
 
       if (imgRatio > targetRatio) {
-        // Image is wider, crop width
+        // Image is wider than target, fit by height and crop width
         cropHeight = fanzaImage.height;
         cropWidth = cropHeight * targetRatio;
       } else {
-        // Image is taller, crop height
+        // Image is taller than target, fit by width and crop height
         cropWidth = fanzaImage.width;
         cropHeight = cropWidth / targetRatio;
+      }
+
+      // Ensure crop doesn't exceed image bounds
+      if (cropWidth > fanzaImage.width) {
+        cropWidth = fanzaImage.width;
+        cropHeight = cropWidth / targetRatio;
+      }
+      if (cropHeight > fanzaImage.height) {
+        cropHeight = fanzaImage.height;
+        cropWidth = cropHeight * targetRatio;
       }
 
       // Position based on sliders
@@ -1458,7 +1947,7 @@
         fanzaOutputBlob = blob;
         const sizeMB = (blob.size / (1024 * 1024)).toFixed(2);
         const sizeKB = (blob.size / 1024).toFixed(1);
-        const isUnder3MB = blob.size <= 3 * 1024 * 1024;
+        const isUnder2MB = blob.size < 2 * 1024 * 1024;
 
         const outputType = fanzaOutputType.value;
         const dims = outputType === '1:1' ? '100x100' : `${fanzaOutputCanvas.width}x${fanzaOutputCanvas.height}`;
@@ -1466,10 +1955,10 @@
         fanzaOutputInfo.innerHTML = `
           <strong>サイズ:</strong> ${dims} |
           <strong>ファイル:</strong> ${sizeMB > 1 ? sizeMB + ' MB' : sizeKB + ' KB'}
-          ${isUnder3MB ? '✅' : '⚠️ 3MB超過 - 品質を下げてください'}
+          ${isUnder2MB ? '✅' : '⚠️ 2MB以上 - 品質を下げてください'}
         `;
 
-        if (!isUnder3MB) {
+        if (!isUnder2MB) {
           fanzaOutputInfo.style.color = '#ff6b6b';
         } else {
           fanzaOutputInfo.style.color = '#aaa';
@@ -1488,7 +1977,14 @@
       if (!fanzaOutputBlob) return;
 
       const outputType = fanzaOutputType.value;
-      const filename = outputType === '1:1' ? 'thumbnail_100x100.jpg' : 'fanza_sample.jpg';
+      let filename;
+      if (outputType === '1:1') {
+        filename = 'thumbnail_100x100.jpg';
+      } else if (outputType === '4:3') {
+        filename = 'package_560x420.jpg';
+      } else {
+        filename = 'fanza_sample.jpg';
+      }
 
       const link = document.createElement('a');
       link.href = URL.createObjectURL(fanzaOutputBlob);
@@ -1560,7 +2056,7 @@
     const collageBgColorInput = document.getElementById('collageBgColor');
 
     let collageImages = []; // Array of { id, img, x, y, w, h, rotation, opacity, cropLeft, cropRight, cropTop, cropBottom, flipH, flipV }
-    let selectedImageId = null;
+    let selectedImageIds = [];
     let collageIdCounter = 0;
     let collageDragState = null; // { type: 'move'|'resize'|'rotate', startX, startY, ... }
 
@@ -1667,7 +2163,7 @@
       collageImageList.innerHTML = '';
       collageImages.forEach((item, index) => {
         const div = document.createElement('div');
-        div.className = 'collage-image-item' + (item.id === selectedImageId ? ' selected' : '');
+        div.className = 'collage-image-item' + (isSelected(item.id) ? ' selected' : '');
         div.innerHTML = `
           <img src="${item.img.src}" alt="">
           <div class="collage-image-item-info">
@@ -1680,7 +2176,18 @@
         `;
         div.addEventListener('click', (e) => {
           if (!e.target.classList.contains('delete')) {
-            selectedImageId = item.id;
+            const isCtrlOrCmd = e.ctrlKey || e.metaKey;
+            if (isCtrlOrCmd) {
+              // Toggle selection
+              if (isSelected(item.id)) {
+                selectedImageIds = selectedImageIds.filter(id => id !== item.id);
+              } else {
+                selectedImageIds.push(item.id);
+              }
+            } else {
+              // Single selection
+              selectedImageIds = [item.id];
+            }
             updateCollageImageList();
             updateCollageControls();
             renderCollage();
@@ -1688,9 +2195,7 @@
         });
         div.querySelector('.delete').addEventListener('click', () => {
           collageImages = collageImages.filter(i => i.id !== item.id);
-          if (selectedImageId === item.id) {
-            selectedImageId = collageImages.length > 0 ? collageImages[collageImages.length - 1].id : null;
-          }
+          selectedImageIds = selectedImageIds.filter(id => id !== item.id);
           updateCollageImageList();
           updateCollageControls();
           renderCollage();
@@ -1700,16 +2205,45 @@
     }
 
     function getSelectedImage() {
-      return collageImages.find(i => i.id === selectedImageId);
+      if (selectedImageIds.length === 1) {
+        return collageImages.find(i => i.id === selectedImageIds[0]);
+      }
+      return null;
+    }
+
+    function getSelectedImages() {
+      return collageImages.filter(i => selectedImageIds.includes(i.id));
+    }
+
+    function isSelected(id) {
+      return selectedImageIds.includes(id);
     }
 
     function updateCollageControls() {
-      const item = getSelectedImage();
-      if (!item) {
+      const alignControls = document.getElementById('collageAlignControls');
+      const singleControls = document.getElementById('collageSingleControls');
+
+      if (selectedImageIds.length === 0) {
         collageControls.style.display = 'none';
         return;
       }
+
       collageControls.style.display = 'block';
+
+      if (selectedImageIds.length >= 2) {
+        // Multiple selection: show align controls
+        if (alignControls) alignControls.style.display = 'block';
+        if (singleControls) singleControls.style.display = 'none';
+        updateAlignButtonStates();
+        return;
+      }
+
+      // Single selection: show normal controls
+      if (alignControls) alignControls.style.display = 'none';
+      if (singleControls) singleControls.style.display = 'block';
+
+      const item = getSelectedImage();
+      if (!item) return;
       document.getElementById('collageItemX').value = Math.round(item.x);
       document.getElementById('collageItemY').value = Math.round(item.y);
       document.getElementById('collageItemW').value = Math.round(item.w);
@@ -1735,6 +2269,121 @@
       document.getElementById('collageFadeBottom').value = item.fadeBottom;
       document.getElementById('collageFadeBottomValue').textContent = item.fadeBottom + '%';
     }
+
+    // Update align button states
+    function updateAlignButtonStates() {
+      const count = selectedImageIds.length;
+      document.getElementById('collageSelectionCount').textContent = count;
+      // Align buttons: enabled when 2+
+      ['alignTop', 'alignMiddleV', 'alignBottom', 'alignLeft', 'alignMiddleH', 'alignRight'].forEach(id => {
+        document.getElementById(id).disabled = count < 2;
+      });
+      // Distribute buttons: enabled when 3+
+      ['distributeH', 'distributeV'].forEach(id => {
+        document.getElementById(id).disabled = count < 3;
+      });
+    }
+
+    // Alignment functions
+    function alignTop() {
+      const selected = getSelectedImages();
+      if (selected.length < 2) return;
+      const minY = Math.min(...selected.map(img => img.y));
+      selected.forEach(img => img.y = minY);
+      renderCollage();
+      updateCollageImageList();
+    }
+
+    function alignMiddleV() {
+      const selected = getSelectedImages();
+      if (selected.length < 2) return;
+      const avgCenterY = selected.reduce((sum, img) => sum + img.y + img.h/2, 0) / selected.length;
+      selected.forEach(img => img.y = avgCenterY - img.h/2);
+      renderCollage();
+      updateCollageImageList();
+    }
+
+    function alignBottom() {
+      const selected = getSelectedImages();
+      if (selected.length < 2) return;
+      const maxBottom = Math.max(...selected.map(img => img.y + img.h));
+      selected.forEach(img => img.y = maxBottom - img.h);
+      renderCollage();
+      updateCollageImageList();
+    }
+
+    function alignLeft() {
+      const selected = getSelectedImages();
+      if (selected.length < 2) return;
+      const minX = Math.min(...selected.map(img => img.x));
+      selected.forEach(img => img.x = minX);
+      renderCollage();
+      updateCollageImageList();
+    }
+
+    function alignMiddleH() {
+      const selected = getSelectedImages();
+      if (selected.length < 2) return;
+      const avgCenterX = selected.reduce((sum, img) => sum + img.x + img.w/2, 0) / selected.length;
+      selected.forEach(img => img.x = avgCenterX - img.w/2);
+      renderCollage();
+      updateCollageImageList();
+    }
+
+    function alignRight() {
+      const selected = getSelectedImages();
+      if (selected.length < 2) return;
+      const maxRight = Math.max(...selected.map(img => img.x + img.w));
+      selected.forEach(img => img.x = maxRight - img.w);
+      renderCollage();
+      updateCollageImageList();
+    }
+
+    function distributeH() {
+      const selected = getSelectedImages();
+      if (selected.length < 3) return;
+      selected.sort((a, b) => a.x - b.x);
+      const leftEdge = selected[0].x;
+      const rightEdge = selected[selected.length - 1].x + selected[selected.length - 1].w;
+      const totalSpan = rightEdge - leftEdge;
+      const totalImageWidth = selected.reduce((sum, img) => sum + img.w, 0);
+      const gap = (totalSpan - totalImageWidth) / (selected.length - 1);
+      let currentX = leftEdge;
+      selected.forEach(img => {
+        img.x = currentX;
+        currentX += img.w + gap;
+      });
+      renderCollage();
+      updateCollageImageList();
+    }
+
+    function distributeV() {
+      const selected = getSelectedImages();
+      if (selected.length < 3) return;
+      selected.sort((a, b) => a.y - b.y);
+      const topEdge = selected[0].y;
+      const bottomEdge = selected[selected.length - 1].y + selected[selected.length - 1].h;
+      const totalSpan = bottomEdge - topEdge;
+      const totalImageHeight = selected.reduce((sum, img) => sum + img.h, 0);
+      const gap = (totalSpan - totalImageHeight) / (selected.length - 1);
+      let currentY = topEdge;
+      selected.forEach(img => {
+        img.y = currentY;
+        currentY += img.h + gap;
+      });
+      renderCollage();
+      updateCollageImageList();
+    }
+
+    // Align button event listeners
+    document.getElementById('alignTop').addEventListener('click', alignTop);
+    document.getElementById('alignMiddleV').addEventListener('click', alignMiddleV);
+    document.getElementById('alignBottom').addEventListener('click', alignBottom);
+    document.getElementById('alignLeft').addEventListener('click', alignLeft);
+    document.getElementById('alignMiddleH').addEventListener('click', alignMiddleH);
+    document.getElementById('alignRight').addEventListener('click', alignRight);
+    document.getElementById('distributeH').addEventListener('click', distributeH);
+    document.getElementById('distributeV').addEventListener('click', distributeV);
 
     // Control inputs
     ['collageItemX', 'collageItemY', 'collageItemW', 'collageItemH'].forEach(id => {
@@ -1980,26 +2629,33 @@
         collageCtx.restore();
       });
 
-      // Draw selection box for selected image
-      if (showSelection) {
-        const selected = getSelectedImage();
-        if (selected) {
-          drawSelectionHandles(selected);
-        }
+      // Draw selection box for selected images
+      if (showSelection && selectedImageIds.length > 0) {
+        const selectedImages = getSelectedImages();
+        selectedImages.forEach((img, idx) => {
+          const isPrimary = selectedImageIds.length === 1 || idx === selectedImages.length - 1;
+          drawSelectionHandles(img, isPrimary);
+        });
       }
     }
 
-    function drawSelectionHandles(item) {
+    function drawSelectionHandles(item, showHandles = true) {
       collageCtx.save();
       collageCtx.translate(item.x + item.w / 2, item.y + item.h / 2);
       collageCtx.rotate(item.rotation * Math.PI / 180);
 
       // Selection border
-      collageCtx.strokeStyle = '#4fc3f7';
-      collageCtx.lineWidth = 2;
+      collageCtx.strokeStyle = showHandles ? '#4fc3f7' : '#7dd3fc';
+      collageCtx.lineWidth = showHandles ? 2 : 1.5;
       collageCtx.setLineDash([5, 5]);
       collageCtx.strokeRect(-item.w / 2, -item.h / 2, item.w, item.h);
       collageCtx.setLineDash([]);
+
+      // Only show handles for primary selection
+      if (!showHandles) {
+        collageCtx.restore();
+        return;
+      }
 
       // Corner handles
       const handleSize = 8;
@@ -2038,11 +2694,12 @@
       const scaleY = collageCanvas.height / rect.height;
       const mx = (e.clientX - rect.left) * scaleX;
       const my = (e.clientY - rect.top) * scaleY;
+      const isCtrlOrCmd = e.ctrlKey || e.metaKey;
 
       const selected = getSelectedImage();
 
-      // Check if clicking on handles of selected image
-      if (selected) {
+      // Check if clicking on handles of selected image (single selection only)
+      if (selected && selectedImageIds.length === 1) {
         const hit = getHandleAt(selected, mx, my);
         if (hit) {
           collageDragState = {
@@ -2063,27 +2720,45 @@
       for (let i = collageImages.length - 1; i >= 0; i--) {
         const item = collageImages[i];
         if (isPointInImage(mx, my, item)) {
-          selectedImageId = item.id;
+          if (isCtrlOrCmd) {
+            // Toggle selection
+            if (isSelected(item.id)) {
+              selectedImageIds = selectedImageIds.filter(id => id !== item.id);
+            } else {
+              selectedImageIds.push(item.id);
+            }
+          } else if (!isSelected(item.id)) {
+            // Single selection
+            selectedImageIds = [item.id];
+          }
+          // If already selected and no modifier, keep selection for drag
+
           updateCollageImageList();
           updateCollageControls();
           renderCollage();
 
+          // Setup drag for all selected images
           collageDragState = {
             type: 'move',
             startX: mx,
             startY: my,
-            origX: item.x,
-            origY: item.y
+            origPositions: getSelectedImages().map(img => ({
+              id: img.id,
+              x: img.x,
+              y: img.y
+            }))
           };
           return;
         }
       }
 
       // Clicked on empty space - deselect
-      selectedImageId = null;
-      updateCollageImageList();
-      updateCollageControls();
-      renderCollage();
+      if (!isCtrlOrCmd) {
+        selectedImageIds = [];
+        updateCollageImageList();
+        updateCollageControls();
+        renderCollage();
+      }
     });
 
     collageCanvas.addEventListener('mousemove', (e) => {
@@ -2095,16 +2770,29 @@
       const mx = (e.clientX - rect.left) * scaleX;
       const my = (e.clientY - rect.top) * scaleY;
 
-      const item = getSelectedImage();
-      if (!item) return;
-
       const dx = mx - collageDragState.startX;
       const dy = my - collageDragState.startY;
 
       if (collageDragState.type === 'move') {
-        item.x = collageDragState.origX + dx;
-        item.y = collageDragState.origY + dy;
-      } else if (collageDragState.type === 'rotate') {
+        // Move all selected images
+        if (collageDragState.origPositions) {
+          collageDragState.origPositions.forEach(orig => {
+            const img = collageImages.find(i => i.id === orig.id);
+            if (img) {
+              img.x = orig.x + dx;
+              img.y = orig.y + dy;
+            }
+          });
+        }
+        renderCollage();
+        updateCollageImageList();
+        return;
+      }
+
+      const item = getSelectedImage();
+      if (!item) return;
+
+      if (collageDragState.type === 'rotate') {
         const cx = item.x + item.w / 2;
         const cy = item.y + item.h / 2;
         const angle = Math.atan2(my - cy, mx - cx) * 180 / Math.PI + 90;
@@ -2219,16 +2907,36 @@
       return null;
     }
 
-    // Keyboard delete
+    // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
-      // Only handle delete if collage tab is active and an image is selected
       const collageTabActive = document.getElementById('collageTab').classList.contains('active');
-      if (collageTabActive && selectedImageId && (e.key === 'Delete' || e.key === 'Backspace')) {
-        // Prevent if focus is on an input
-        if (e.target.tagName === 'INPUT') return;
+      if (!collageTabActive) return;
+      if (e.target.tagName === 'INPUT') return;
+
+      // Ctrl/Cmd+A: Select all
+      if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
         e.preventDefault();
-        collageImages = collageImages.filter(i => i.id !== selectedImageId);
-        selectedImageId = collageImages.length > 0 ? collageImages[collageImages.length - 1].id : null;
+        selectedImageIds = collageImages.map(img => img.id);
+        updateCollageImageList();
+        updateCollageControls();
+        renderCollage();
+        return;
+      }
+
+      // Escape: Deselect all
+      if (e.key === 'Escape') {
+        selectedImageIds = [];
+        updateCollageImageList();
+        updateCollageControls();
+        renderCollage();
+        return;
+      }
+
+      // Delete/Backspace: Delete selected images
+      if (selectedImageIds.length > 0 && (e.key === 'Delete' || e.key === 'Backspace')) {
+        e.preventDefault();
+        collageImages = collageImages.filter(i => !selectedImageIds.includes(i.id));
+        selectedImageIds = [];
         updateCollageImageList();
         updateCollageControls();
         renderCollage();
@@ -2237,6 +2945,668 @@
 
     // Initial render
     renderCollage();
+
+    // ==================== Background Remover ====================
+    const bgremoveUpload = document.getElementById('bgremoveUpload');
+    const bgremoveFileInput = document.getElementById('bgremoveFileInput');
+    const bgremoveControls = document.getElementById('bgremoveControls');
+    const bgremovePreview = document.getElementById('bgremovePreview');
+    const bgremoveSourceCanvas = document.getElementById('bgremoveSourceCanvas');
+    const bgremoveOutputCanvas = document.getElementById('bgremoveOutputCanvas');
+    const bgremoveSourceCtx = bgremoveSourceCanvas.getContext('2d');
+    const bgremoveOutputCtx = bgremoveOutputCanvas.getContext('2d');
+    const bgremoveMethod = document.getElementById('bgremoveMethod');
+    const bgremoveColor = document.getElementById('bgremoveColor');
+    const bgremovetolerance = document.getElementById('bgremovetolerance');
+    const bgremoveToleranceValue = document.getElementById('bgremoveToleranceValue');
+    const bgremoveThreshold = document.getElementById('bgremoveThreshold');
+    const bgremoveThresholdValue = document.getElementById('bgremoveThresholdValue');
+    const bgremoveColorOptions = document.getElementById('bgremoveColorOptions');
+    const bgremoveEdgeOptions = document.getElementById('bgremoveEdgeOptions');
+    const bgremoveProcess = document.getElementById('bgremoveProcess');
+    const bgremoveLoading = document.getElementById('bgremoveLoading');
+    const bgremoveDownload = document.getElementById('bgremoveDownload');
+
+    let bgremoveImage = null;
+    let bgremoveHistory = [];
+    let bgremoveMode = 'click'; // 'click' or 'draw'
+    let bgremoveDrawing = false;
+    const bgremoveUndo = document.getElementById('bgremoveUndo');
+    const bgremoveClickMode = document.getElementById('bgremoveClickMode');
+    const bgremovedrawMode = document.getElementById('bgremovedrawMode');
+    const bgremovedrawModeButtons = document.getElementById('bgremoveModeButtons');
+
+    // Upload handlers
+    bgremoveUpload.addEventListener('click', () => bgremoveFileInput.click());
+    bgremoveFileInput.addEventListener('change', (e) => {
+      if (e.target.files[0]) loadBgremoveImage(e.target.files[0]);
+    });
+    bgremoveUpload.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      bgremoveUpload.classList.add('dragover');
+    });
+    bgremoveUpload.addEventListener('dragleave', () => {
+      bgremoveUpload.classList.remove('dragover');
+    });
+    bgremoveUpload.addEventListener('drop', (e) => {
+      e.preventDefault();
+      bgremoveUpload.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) {
+        loadBgremoveImage(file);
+      }
+    });
+
+    // Load image
+    function loadBgremoveImage(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          bgremoveImage = img;
+
+          // Calculate display size (max 500px)
+          const maxSize = 500;
+          let displayWidth = img.width;
+          let displayHeight = img.height;
+          if (displayWidth > maxSize || displayHeight > maxSize) {
+            const ratio = Math.min(maxSize / displayWidth, maxSize / displayHeight);
+            displayWidth = Math.round(displayWidth * ratio);
+            displayHeight = Math.round(displayHeight * ratio);
+          }
+
+          // Source canvas (for display)
+          bgremoveSourceCanvas.width = displayWidth;
+          bgremoveSourceCanvas.height = displayHeight;
+          bgremoveSourceCtx.drawImage(img, 0, 0, displayWidth, displayHeight);
+
+          // Output canvas (full resolution)
+          bgremoveOutputCanvas.width = displayWidth;
+          bgremoveOutputCanvas.height = displayHeight;
+
+          bgremoveControls.style.display = 'flex';
+          bgremovePreview.style.display = 'flex';
+          bgremoveDownload.style.display = 'none';
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Method switch
+    bgremoveMethod.addEventListener('change', () => {
+      const method = bgremoveMethod.value;
+      bgremoveColorOptions.style.display = method === 'color' ? 'flex' : 'none';
+      bgremoveEdgeOptions.style.display = method === 'edge' ? 'flex' : 'none';
+    });
+
+    // Tolerance slider
+    bgremovetolerance.addEventListener('input', (e) => {
+      bgremoveToleranceValue.textContent = e.target.value;
+    });
+
+    // Threshold slider
+    bgremoveThreshold.addEventListener('input', (e) => {
+      bgremoveThresholdValue.textContent = e.target.value;
+    });
+
+    // Click on source canvas to pick color
+    bgremoveSourceCanvas.addEventListener('click', (e) => {
+      if (!bgremoveImage || bgremoveMethod.value !== 'color') return;
+
+      const rect = bgremoveSourceCanvas.getBoundingClientRect();
+      const scaleX = bgremoveSourceCanvas.width / rect.width;
+      const scaleY = bgremoveSourceCanvas.height / rect.height;
+      const x = Math.floor((e.clientX - rect.left) * scaleX);
+      const y = Math.floor((e.clientY - rect.top) * scaleY);
+
+      const imageData = bgremoveSourceCtx.getImageData(x, y, 1, 1);
+      const [r, g, b] = imageData.data;
+      const hex = '#' + [r, g, b].map(c => c.toString(16).padStart(2, '0')).join('');
+      bgremoveColor.value = hex;
+    });
+
+    // Process button
+    bgremoveProcess.addEventListener('click', async () => {
+      if (!bgremoveImage) return;
+
+      bgremoveLoading.style.display = 'flex';
+      bgremoveProcess.disabled = true;
+
+      // Use setTimeout to allow UI to update
+      setTimeout(() => {
+        try {
+          const method = bgremoveMethod.value;
+
+          // Create temp canvas at full resolution
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = bgremoveImage.width;
+          tempCanvas.height = bgremoveImage.height;
+          const tempCtx = tempCanvas.getContext('2d');
+          tempCtx.drawImage(bgremoveImage, 0, 0);
+
+          const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+          const data = imageData.data;
+
+          if (method === 'color') {
+            // Color-based removal
+            const targetColor = hexToRgb(bgremoveColor.value);
+            const tolerance = parseInt(bgremovetolerance.value);
+
+            for (let i = 0; i < data.length; i += 4) {
+              const r = data[i];
+              const g = data[i + 1];
+              const b = data[i + 2];
+
+              const distance = Math.sqrt(
+                Math.pow(r - targetColor.r, 2) +
+                Math.pow(g - targetColor.g, 2) +
+                Math.pow(b - targetColor.b, 2)
+              );
+
+              if (distance <= tolerance * 4.42) { // 4.42 = sqrt(3 * 255^2) / 100
+                data[i + 3] = 0; // Set alpha to 0
+              }
+            }
+          } else if (method === 'edge') {
+            // Edge detection (flood fill from corners)
+            const threshold = parseInt(bgremoveThreshold.value);
+            const width = tempCanvas.width;
+            const height = tempCanvas.height;
+            const visited = new Uint8Array(width * height);
+
+            // Get corner colors
+            const corners = [
+              { x: 0, y: 0 },
+              { x: width - 1, y: 0 },
+              { x: 0, y: height - 1 },
+              { x: width - 1, y: height - 1 }
+            ];
+
+            // Flood fill from each corner
+            for (const corner of corners) {
+              const startIdx = (corner.y * width + corner.x) * 4;
+              const targetColor = {
+                r: data[startIdx],
+                g: data[startIdx + 1],
+                b: data[startIdx + 2]
+              };
+
+              floodFillTransparent(data, width, height, corner.x, corner.y, targetColor, threshold, visited);
+            }
+          }
+
+          tempCtx.putImageData(imageData, 0, 0);
+
+          // Draw to output canvas (scaled)
+          bgremoveOutputCanvas.width = bgremoveSourceCanvas.width;
+          bgremoveOutputCanvas.height = bgremoveSourceCanvas.height;
+          bgremoveOutputCtx.clearRect(0, 0, bgremoveOutputCanvas.width, bgremoveOutputCanvas.height);
+          bgremoveOutputCtx.drawImage(tempCanvas, 0, 0, bgremoveOutputCanvas.width, bgremoveOutputCanvas.height);
+
+          // Store full resolution result
+          bgremoveOutputCanvas._fullResCanvas = tempCanvas;
+
+          // Save to history
+          bgremoveHistory = [tempCanvas.toDataURL('image/png')];
+          bgremoveUndo.style.display = 'none';
+
+          bgremoveDownload.style.display = 'inline-block';
+          bgremoveOutputInfo.style.display = 'block';
+          bgremovedrawModeButtons.style.display = 'flex';
+        } catch (err) {
+          console.error('Background removal failed:', err);
+          alert('背景除去に失敗しました');
+        } finally {
+          bgremoveLoading.style.display = 'none';
+          bgremoveProcess.disabled = false;
+        }
+      }, 50);
+    });
+
+    // Flood fill function for edge detection
+    function floodFillTransparent(data, width, height, startX, startY, targetColor, threshold, visited) {
+      const stack = [[startX, startY]];
+      const thresholdSq = Math.pow(threshold * 4.42, 2);
+
+      while (stack.length > 0) {
+        const [x, y] = stack.pop();
+
+        if (x < 0 || x >= width || y < 0 || y >= height) continue;
+
+        const pixelIdx = y * width + x;
+        if (visited[pixelIdx]) continue;
+
+        const i = pixelIdx * 4;
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+
+        const distSq = Math.pow(r - targetColor.r, 2) +
+                       Math.pow(g - targetColor.g, 2) +
+                       Math.pow(b - targetColor.b, 2);
+
+        if (distSq > thresholdSq) continue;
+
+        visited[pixelIdx] = 1;
+        data[i + 3] = 0; // Make transparent
+
+        // Add neighbors
+        stack.push([x + 1, y]);
+        stack.push([x - 1, y]);
+        stack.push([x, y + 1]);
+        stack.push([x, y - 1]);
+      }
+    }
+
+    // Helper: hex to rgb
+    function hexToRgb(hex) {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+      } : { r: 255, g: 255, b: 255 };
+    }
+
+    // Download button
+    bgremoveDownload.addEventListener('click', () => {
+      const fullResCanvas = bgremoveOutputCanvas._fullResCanvas;
+      if (!fullResCanvas) return;
+
+      const link = document.createElement('a');
+      link.download = 'transparent-image.png';
+      link.href = fullResCanvas.toDataURL('image/png');
+      link.click();
+    });
+
+    // Click on output canvas to remove additional areas
+    const bgremoveOutputInfo = document.getElementById('bgremoveOutputInfo');
+    bgremoveOutputCanvas.style.cursor = 'crosshair';
+
+    bgremoveOutputCanvas.addEventListener('click', (e) => {
+      if (bgremoveMode !== 'click') return;
+      const fullResCanvas = bgremoveOutputCanvas._fullResCanvas;
+      if (!fullResCanvas || !bgremoveImage) return;
+
+      const rect = bgremoveOutputCanvas.getBoundingClientRect();
+      const scaleX = fullResCanvas.width / rect.width;
+      const scaleY = fullResCanvas.height / rect.height;
+      const x = Math.floor((e.clientX - rect.left) * scaleX);
+      const y = Math.floor((e.clientY - rect.top) * scaleY);
+
+      const fullResCtx = fullResCanvas.getContext('2d');
+      const imageData = fullResCtx.getImageData(0, 0, fullResCanvas.width, fullResCanvas.height);
+      const data = imageData.data;
+
+      // Check if clicked pixel is already transparent
+      const clickIdx = (y * fullResCanvas.width + x) * 4;
+      if (data[clickIdx + 3] === 0) return; // Already transparent
+
+      // Get clicked color
+      const targetColor = {
+        r: data[clickIdx],
+        g: data[clickIdx + 1],
+        b: data[clickIdx + 2]
+      };
+
+      // Flood fill from clicked point
+      const tolerance = parseInt(bgremovetolerance.value);
+      const visited = new Uint8Array(fullResCanvas.width * fullResCanvas.height);
+      floodFillTransparent(data, fullResCanvas.width, fullResCanvas.height, x, y, targetColor, tolerance, visited);
+
+      fullResCtx.putImageData(imageData, 0, 0);
+
+      // Save to history before updating display
+      bgremoveHistory.push(fullResCanvas.toDataURL('image/png'));
+      if (bgremoveHistory.length > 20) bgremoveHistory.shift();
+      bgremoveUndo.style.display = bgremoveHistory.length > 1 ? 'inline-block' : 'none';
+
+      // Update display canvas
+      bgremoveOutputCtx.clearRect(0, 0, bgremoveOutputCanvas.width, bgremoveOutputCanvas.height);
+      bgremoveOutputCtx.drawImage(fullResCanvas, 0, 0, bgremoveOutputCanvas.width, bgremoveOutputCanvas.height);
+    });
+
+    // Undo button
+    bgremoveUndo.addEventListener('click', () => {
+      if (bgremoveHistory.length <= 1) return;
+
+      bgremoveHistory.pop();
+      const lastState = bgremoveHistory[bgremoveHistory.length - 1];
+
+      const img = new Image();
+      img.onload = () => {
+        const fullResCanvas = bgremoveOutputCanvas._fullResCanvas;
+        const fullResCtx = fullResCanvas.getContext('2d');
+        fullResCtx.clearRect(0, 0, fullResCanvas.width, fullResCanvas.height);
+        fullResCtx.drawImage(img, 0, 0);
+
+        bgremoveOutputCtx.clearRect(0, 0, bgremoveOutputCanvas.width, bgremoveOutputCanvas.height);
+        bgremoveOutputCtx.drawImage(fullResCanvas, 0, 0, bgremoveOutputCanvas.width, bgremoveOutputCanvas.height);
+
+        bgremoveUndo.style.display = bgremoveHistory.length > 1 ? 'inline-block' : 'none';
+      };
+      img.src = lastState;
+    });
+
+    // Mode switching
+    const bgremovedrawSizeLabel = document.getElementById('bgremovedrawSizeLabel');
+    const bgremovedrawSize = document.getElementById('bgremovedrawSize');
+    const bgremovedrawSizeValue = document.getElementById('bgremovedrawSizeValue');
+
+    bgremoveClickMode.addEventListener('click', () => {
+      bgremoveMode = 'click';
+      bgremoveClickMode.style.background = '#4fc3f7';
+      bgremoveClickMode.style.color = '#1a1a2e';
+      bgremovedrawMode.style.background = '#555';
+      bgremovedrawMode.style.color = '#fff';
+      bgremoveOutputCanvas.style.cursor = 'crosshair';
+      bgremovedrawSizeLabel.style.display = 'none';
+    });
+
+    bgremovedrawMode.addEventListener('click', () => {
+      bgremoveMode = 'draw';
+      bgremovedrawMode.style.background = '#4fc3f7';
+      bgremovedrawMode.style.color = '#1a1a2e';
+      bgremoveClickMode.style.background = '#555';
+      bgremoveClickMode.style.color = '#fff';
+      updatePenCursor();
+      bgremovedrawSizeLabel.style.display = 'flex';
+    });
+
+    function updatePenCursor() {
+      const size = parseInt(bgremovedrawSize.value) * 2;
+      bgremoveOutputCanvas.style.cursor = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='${size}' height='${size}' viewBox='0 0 ${size} ${size}'%3E%3Ccircle cx='${size/2}' cy='${size/2}' r='${size/2 - 1}' fill='none' stroke='%23ff6b6b' stroke-width='2'/%3E%3C/svg%3E") ${size/2} ${size/2}, crosshair`;
+    }
+
+    bgremovedrawSize.addEventListener('input', (e) => {
+      bgremovedrawSizeValue.textContent = e.target.value;
+      updatePenCursor();
+    });
+
+    // Pen drawing on output canvas (eraser mode - erase pixels directly)
+
+    bgremoveOutputCanvas.addEventListener('mousedown', (e) => {
+      if (bgremoveMode !== 'draw') return;
+      const fullResCanvas = bgremoveOutputCanvas._fullResCanvas;
+      if (!fullResCanvas) return;
+
+      bgremoveDrawing = true;
+      // Save state before drawing starts
+      bgremoveHistory.push(fullResCanvas.toDataURL('image/png'));
+      if (bgremoveHistory.length > 20) bgremoveHistory.shift();
+
+      // Erase at initial click position
+      erasePenArea(e);
+    });
+
+    function erasePenArea(e) {
+      const fullResCanvas = bgremoveOutputCanvas._fullResCanvas;
+      if (!fullResCanvas) return;
+
+      const rect = bgremoveOutputCanvas.getBoundingClientRect();
+      const scaleX = fullResCanvas.width / rect.width;
+      const scaleY = fullResCanvas.height / rect.height;
+      const x = Math.floor((e.clientX - rect.left) * scaleX);
+      const y = Math.floor((e.clientY - rect.top) * scaleY);
+
+      const fullResCtx = fullResCanvas.getContext('2d');
+      const penRadius = Math.floor(parseInt(bgremovedrawSize.value) * scaleX);
+
+      // Use destination-out to erase (make transparent)
+      fullResCtx.save();
+      fullResCtx.globalCompositeOperation = 'destination-out';
+      fullResCtx.beginPath();
+      fullResCtx.arc(x, y, penRadius, 0, Math.PI * 2);
+      fullResCtx.fill();
+      fullResCtx.restore();
+
+      // Update display
+      bgremoveOutputCtx.clearRect(0, 0, bgremoveOutputCanvas.width, bgremoveOutputCanvas.height);
+      bgremoveOutputCtx.drawImage(fullResCanvas, 0, 0, bgremoveOutputCanvas.width, bgremoveOutputCanvas.height);
+    }
+
+    bgremoveOutputCanvas.addEventListener('mousemove', (e) => {
+      if (bgremoveMode !== 'draw' || !bgremoveDrawing) return;
+      erasePenArea(e);
+    });
+
+    bgremoveOutputCanvas.addEventListener('mouseup', () => {
+      if (bgremoveMode !== 'draw' || !bgremoveDrawing) return;
+      bgremoveDrawing = false;
+      bgremoveUndo.style.display = bgremoveHistory.length > 1 ? 'inline-block' : 'none';
+    });
+
+    bgremoveOutputCanvas.addEventListener('mouseleave', () => {
+      if (bgremoveDrawing) {
+        bgremoveDrawing = false;
+        bgremoveUndo.style.display = bgremoveHistory.length > 1 ? 'inline-block' : 'none';
+      }
+    });
+
+    // ==================== Fullscreen Editor ====================
+    const fsOverlay = document.getElementById('bgremoveFullscreenOverlay');
+    const fsCanvas = document.getElementById('bgremoveFullscreenCanvas');
+    const fsCtx = fsCanvas.getContext('2d');
+    const fsClickMode = document.getElementById('fsClickMode');
+    const fsdrawMode = document.getElementById('fsdrawMode');
+    const fsdrawSizeLabel = document.getElementById('fsdrawSizeLabel');
+    const fsdrawSize = document.getElementById('fsdrawSize');
+    const fsdrawSizeValue = document.getElementById('fsdrawSizeValue');
+    const fsUndo = document.getElementById('fsUndo');
+    const fsDownload = document.getElementById('fsDownload');
+    const fsClose = document.getElementById('fsClose');
+    const bgremoveFullscreenBtn = document.getElementById('bgremoveFullscreenBtn');
+
+    let fsMode = 'click';
+    let fsDrawing = false;
+
+    // Open fullscreen
+    bgremoveFullscreenBtn.addEventListener('click', openFullscreen);
+
+    function openFullscreen() {
+      const fullResCanvas = bgremoveOutputCanvas._fullResCanvas;
+      if (!fullResCanvas) return;
+
+      // Copy current state to fullscreen canvas
+      fsCanvas.width = fullResCanvas.width;
+      fsCanvas.height = fullResCanvas.height;
+      fsCtx.drawImage(fullResCanvas, 0, 0);
+
+      // Sync mode
+      fsMode = bgremoveMode;
+      updateFsMode();
+
+      // Sync pen size
+      fsdrawSize.value = bgremovedrawSize.value;
+      fsdrawSizeValue.textContent = bgremovedrawSize.value;
+
+      fsOverlay.classList.add('active');
+      fsCanvas.style.cursor = fsMode === 'draw' ? getPenCursor(parseInt(fsdrawSize.value)) : 'crosshair';
+    }
+
+    function closeFullscreen() {
+      // Copy back to main canvas
+      const fullResCanvas = bgremoveOutputCanvas._fullResCanvas;
+      if (fullResCanvas) {
+        const fullResCtx = fullResCanvas.getContext('2d');
+        fullResCtx.clearRect(0, 0, fullResCanvas.width, fullResCanvas.height);
+        fullResCtx.drawImage(fsCanvas, 0, 0);
+
+        bgremoveOutputCtx.clearRect(0, 0, bgremoveOutputCanvas.width, bgremoveOutputCanvas.height);
+        bgremoveOutputCtx.drawImage(fullResCanvas, 0, 0, bgremoveOutputCanvas.width, bgremoveOutputCanvas.height);
+      }
+
+      fsOverlay.classList.remove('active');
+    }
+
+    fsClose.addEventListener('click', closeFullscreen);
+
+    // Mode switching in fullscreen
+    function updateFsMode() {
+      fsClickMode.style.background = fsMode === 'click' ? '#4fc3f7' : '#555';
+      fsClickMode.style.color = fsMode === 'click' ? '#1a1a2e' : '#fff';
+      fsdrawMode.style.background = fsMode === 'draw' ? '#4fc3f7' : '#555';
+      fsdrawMode.style.color = fsMode === 'draw' ? '#1a1a2e' : '#fff';
+      fsdrawSizeLabel.style.display = fsMode === 'draw' ? 'flex' : 'none';
+      fsCanvas.style.cursor = fsMode === 'draw' ? getPenCursor(parseInt(fsdrawSize.value)) : 'crosshair';
+    }
+
+    function getPenCursor(size) {
+      const cursorSize = size * 2;
+      return `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='${cursorSize}' height='${cursorSize}' viewBox='0 0 ${cursorSize} ${cursorSize}'%3E%3Ccircle cx='${cursorSize/2}' cy='${cursorSize/2}' r='${cursorSize/2 - 1}' fill='none' stroke='%23ff6b6b' stroke-width='2'/%3E%3C/svg%3E") ${cursorSize/2} ${cursorSize/2}, crosshair`;
+    }
+
+    fsClickMode.addEventListener('click', () => {
+      fsMode = 'click';
+      updateFsMode();
+    });
+
+    fsdrawMode.addEventListener('click', () => {
+      fsMode = 'draw';
+      updateFsMode();
+    });
+
+    fsdrawSize.addEventListener('input', (e) => {
+      fsdrawSizeValue.textContent = e.target.value;
+      fsCanvas.style.cursor = getPenCursor(parseInt(e.target.value));
+    });
+
+    // Drawing on fullscreen canvas
+    fsCanvas.addEventListener('mousedown', (e) => {
+      if (fsMode === 'draw') {
+        fsDrawing = true;
+        // Save state before drawing
+        bgremoveHistory.push(fsCanvas.toDataURL('image/png'));
+        if (bgremoveHistory.length > 20) bgremoveHistory.shift();
+        fsErasePenArea(e);
+      }
+    });
+
+    fsCanvas.addEventListener('mousemove', (e) => {
+      if (fsMode === 'draw' && fsDrawing) {
+        fsErasePenArea(e);
+      }
+    });
+
+    fsCanvas.addEventListener('mouseup', () => {
+      fsDrawing = false;
+    });
+
+    fsCanvas.addEventListener('mouseleave', () => {
+      fsDrawing = false;
+    });
+
+    function fsErasePenArea(e) {
+      const rect = fsCanvas.getBoundingClientRect();
+      const scaleX = fsCanvas.width / rect.width;
+      const scaleY = fsCanvas.height / rect.height;
+      const x = Math.floor((e.clientX - rect.left) * scaleX);
+      const y = Math.floor((e.clientY - rect.top) * scaleY);
+      const penRadius = Math.floor(parseInt(fsdrawSize.value) * scaleX);
+
+      fsCtx.save();
+      fsCtx.globalCompositeOperation = 'destination-out';
+      fsCtx.beginPath();
+      fsCtx.arc(x, y, penRadius, 0, Math.PI * 2);
+      fsCtx.fill();
+      fsCtx.restore();
+    }
+
+    // Click mode on fullscreen canvas
+    fsCanvas.addEventListener('click', (e) => {
+      if (fsMode !== 'click') return;
+
+      const rect = fsCanvas.getBoundingClientRect();
+      const scaleX = fsCanvas.width / rect.width;
+      const scaleY = fsCanvas.height / rect.height;
+      const x = Math.floor((e.clientX - rect.left) * scaleX);
+      const y = Math.floor((e.clientY - rect.top) * scaleY);
+
+      const imageData = fsCtx.getImageData(0, 0, fsCanvas.width, fsCanvas.height);
+      const data = imageData.data;
+      const clickIdx = (y * fsCanvas.width + x) * 4;
+
+      if (data[clickIdx + 3] === 0) return;
+
+      const targetColor = {
+        r: data[clickIdx],
+        g: data[clickIdx + 1],
+        b: data[clickIdx + 2]
+      };
+
+      // Save state before flood fill
+      bgremoveHistory.push(fsCanvas.toDataURL('image/png'));
+      if (bgremoveHistory.length > 20) bgremoveHistory.shift();
+
+      const tolerance = parseInt(bgremovetolerance.value);
+      const visited = new Uint8Array(fsCanvas.width * fsCanvas.height);
+      floodFillTransparent(data, fsCanvas.width, fsCanvas.height, x, y, targetColor, tolerance, visited);
+      fsCtx.putImageData(imageData, 0, 0);
+    });
+
+    // Undo in fullscreen
+    fsUndo.addEventListener('click', performUndo);
+
+    function performUndo() {
+      if (bgremoveHistory.length <= 1) return;
+
+      bgremoveHistory.pop();
+      const lastState = bgremoveHistory[bgremoveHistory.length - 1];
+
+      const img = new Image();
+      img.onload = () => {
+        // Update fullscreen canvas if open
+        if (fsOverlay.classList.contains('active')) {
+          fsCtx.clearRect(0, 0, fsCanvas.width, fsCanvas.height);
+          fsCtx.drawImage(img, 0, 0);
+        }
+
+        // Update main canvas
+        const fullResCanvas = bgremoveOutputCanvas._fullResCanvas;
+        if (fullResCanvas) {
+          const fullResCtx = fullResCanvas.getContext('2d');
+          fullResCtx.clearRect(0, 0, fullResCanvas.width, fullResCanvas.height);
+          fullResCtx.drawImage(img, 0, 0);
+
+          bgremoveOutputCtx.clearRect(0, 0, bgremoveOutputCanvas.width, bgremoveOutputCanvas.height);
+          bgremoveOutputCtx.drawImage(fullResCanvas, 0, 0, bgremoveOutputCanvas.width, bgremoveOutputCanvas.height);
+        }
+
+        bgremoveUndo.style.display = bgremoveHistory.length > 1 ? 'inline-block' : 'none';
+      };
+      img.src = lastState;
+    }
+
+    // Download from fullscreen
+    fsDownload.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.download = 'transparent-image.png';
+      link.href = fsCanvas.toDataURL('image/png');
+      link.click();
+    });
+
+    // Keyboard shortcuts for bgremove tab
+    document.addEventListener('keydown', (e) => {
+      const bgremoveTabActive = document.getElementById('bgremoveTab').classList.contains('active');
+      const fsActive = fsOverlay.classList.contains('active');
+
+      if (!bgremoveTabActive && !fsActive) return;
+
+      // Ctrl+Z / Cmd+Z: Undo
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault();
+        performUndo();
+        return;
+      }
+
+      // Escape: Close fullscreen
+      if (e.key === 'Escape' && fsActive) {
+        e.preventDefault();
+        closeFullscreen();
+        return;
+      }
+    });
   </script>
 </body>
 </html>
