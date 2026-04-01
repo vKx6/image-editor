@@ -119,6 +119,11 @@
       background: rgba(255, 107, 107, 0.1);
       pointer-events: none;
     }
+    .selection-box.crop-mode {
+      border: 2px solid #4fc3f7;
+      background: transparent;
+      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+    }
     .text-preview {
       position: absolute;
       cursor: move;
@@ -746,6 +751,7 @@
       <button id="fillBtn">🎨 塗りつぶし</button>
       <button id="textBtn">📝 テキスト</button>
       <button id="retouchBtn">🖌️ レタッチ</button>
+      <button id="cropBtn">✂️ トリミング</button>
       <div class="options">
         <label>
           サイズ: <span id="sizeValue">10</span>
@@ -823,6 +829,11 @@
           <input type="color" id="brushColor" value="#000000">
         </label>
       </div>
+      <div class="options" id="cropOptions" style="display:none;">
+        <span id="cropInfo" style="color:#888;">ドラッグで範囲を選択</span>
+        <button id="cropApplyBtn" style="background:#66bb6a;color:#fff;" disabled>✓ 確定</button>
+        <button id="cropCancelBtn" style="background:#ff6b6b;color:#fff;">✕ キャンセル</button>
+      </div>
       <button id="undoBtn" disabled>↩ 戻す</button>
       <button id="saveBtn" disabled>💾 保存</button>
     </div>
@@ -842,6 +853,7 @@
         <li><kbd>F</kbd> 塗りつぶしモード</li>
         <li><kbd>T</kbd> テキストモード</li>
         <li><kbd>R</kbd> レタッチモード</li>
+        <li><kbd>C</kbd> トリミングモード</li>
         <li><kbd>Ctrl+Z</kbd> 元に戻す</li>
         <li><kbd>Ctrl+S</kbd> 保存</li>
         <li><kbd>↑</kbd><kbd>↓</kbd> サイズ変更</li>
@@ -1182,7 +1194,12 @@
     const fillBtn = document.getElementById('fillBtn');
     const textBtn = document.getElementById('textBtn');
     const retouchBtn = document.getElementById('retouchBtn');
+    const cropBtn = document.getElementById('cropBtn');
     const retouchOptions = document.getElementById('retouchOptions');
+    const cropOptions = document.getElementById('cropOptions');
+    const cropApplyBtn = document.getElementById('cropApplyBtn');
+    const cropCancelBtn = document.getElementById('cropCancelBtn');
+    const cropInfo = document.getElementById('cropInfo');
     const brushSize = document.getElementById('brushSize');
     const brushSizeValue = document.getElementById('brushSizeValue');
     const brushHardness = document.getElementById('brushHardness');
@@ -1231,22 +1248,40 @@
     let textDragOffsetX = 0;
     let textDragOffsetY = 0;
 
+    // Crop state
+    let cropStartX = 0, cropStartY = 0, cropEndX = 0, cropEndY = 0;
+    let hasCropSelection = false;
+
     // Mode switching
     function setMode(newMode) {
+      // Clear crop selection when switching away from crop mode
+      if (mode === 'crop' && newMode !== 'crop') {
+        clearCropSelection();
+      }
+
       mode = newMode;
       mosaicBtn.classList.toggle('active', mode === 'mosaic');
       fillBtn.classList.toggle('active', mode === 'fill');
       textBtn.classList.toggle('active', mode === 'text');
       retouchBtn.classList.toggle('active', mode === 'retouch');
+      cropBtn.classList.toggle('active', mode === 'crop');
       textOptions.style.display = mode === 'text' ? 'flex' : 'none';
       retouchOptions.style.display = mode === 'retouch' ? 'flex' : 'none';
+      cropOptions.style.display = mode === 'crop' ? 'flex' : 'none';
 
       if (mode === 'retouch') {
         canvas.style.cursor = 'crosshair';
       } else if (mode === 'text') {
         canvas.style.cursor = 'default';
+      } else if (mode === 'crop') {
+        canvas.style.cursor = 'crosshair';
+        selectionBox.classList.add('crop-mode');
       } else {
         canvas.style.cursor = 'crosshair';
+      }
+
+      if (mode !== 'crop') {
+        selectionBox.classList.remove('crop-mode');
       }
 
       if (mode === 'text' && originalImage) {
@@ -1260,6 +1295,7 @@
     fillBtn.addEventListener('click', () => setMode('fill'));
     textBtn.addEventListener('click', () => setMode('text'));
     retouchBtn.addEventListener('click', () => setMode('retouch'));
+    cropBtn.addEventListener('click', () => setMode('crop'));
 
     // Retouch slider event listeners
     brushSize.addEventListener('input', (e) => {
@@ -1672,7 +1708,6 @@
 
       if (!isDrawing || mode === 'text') return;
       isDrawing = false;
-      selectionBox.style.display = 'none';
 
       const rect = canvas.getBoundingClientRect();
       const scaleX = canvas.width / rect.width;
@@ -1684,6 +1719,24 @@
       const y = Math.min(startY, endY);
       const w = Math.abs(endX - startX);
       const h = Math.abs(endY - startY);
+
+      if (mode === 'crop') {
+        if (w > 5 && h > 5) {
+          // Keep selection box visible for crop mode
+          cropStartX = x;
+          cropStartY = y;
+          cropEndX = x + w;
+          cropEndY = y + h;
+          hasCropSelection = true;
+          cropApplyBtn.disabled = false;
+          cropInfo.textContent = `${Math.round(w)} x ${Math.round(h)} px`;
+        } else {
+          selectionBox.style.display = 'none';
+        }
+        return;
+      }
+
+      selectionBox.style.display = 'none';
 
       if (w > 5 && h > 5) {
         if (mode === 'mosaic') {
@@ -1752,6 +1805,55 @@
       ctx.fillRect(Math.floor(x), Math.floor(y), Math.floor(w), Math.floor(h));
     }
 
+    // Clear crop selection
+    function clearCropSelection() {
+      hasCropSelection = false;
+      cropStartX = cropStartY = cropEndX = cropEndY = 0;
+      selectionBox.style.display = 'none';
+      cropApplyBtn.disabled = true;
+      cropInfo.textContent = 'ドラッグで範囲を選択';
+    }
+
+    // Apply crop
+    function applyCrop() {
+      if (!hasCropSelection || !originalImage) return;
+
+      const x = Math.floor(cropStartX);
+      const y = Math.floor(cropStartY);
+      const w = Math.floor(cropEndX - cropStartX);
+      const h = Math.floor(cropEndY - cropStartY);
+
+      if (w <= 0 || h <= 0) return;
+
+      // Get cropped image data
+      const imageData = ctx.getImageData(x, y, w, h);
+
+      // Resize canvas to crop size
+      canvas.width = w;
+      canvas.height = h;
+
+      // Put cropped image
+      ctx.putImageData(imageData, 0, 0);
+
+      // Update original image reference
+      const croppedImage = new Image();
+      croppedImage.onload = function() {
+        originalImage = croppedImage;
+        saveState();
+        info.textContent = `${w} x ${h}`;
+      };
+      croppedImage.src = canvas.toDataURL();
+
+      clearCropSelection();
+      setMode('mosaic');
+    }
+
+    // Crop button events
+    cropApplyBtn.addEventListener('click', applyCrop);
+    cropCancelBtn.addEventListener('click', () => {
+      clearCropSelection();
+    });
+
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
       if (e.key === 'm' || e.key === 'M') {
@@ -1762,6 +1864,8 @@
         textBtn.click();
       } else if (e.key === 'r' || e.key === 'R') {
         retouchBtn.click();
+      } else if (e.key === 'c' || e.key === 'C') {
+        cropBtn.click();
       } else if (e.ctrlKey && e.key === 'z') {
         e.preventDefault();
         undo();
