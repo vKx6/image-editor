@@ -128,9 +128,10 @@
       position: absolute;
       cursor: move;
       border: 2px dashed #4fc3f7;
-      padding: 4px;
+      padding: 0;
       user-select: none;
       white-space: pre;
+      box-sizing: border-box;
     }
     .text-preview:hover {
       border-color: #29b6f6;
@@ -763,7 +764,7 @@
         </label>
       </div>
       <div class="options" id="textOptions" style="display:none;">
-        <input type="text" id="textInput" placeholder="テキストを入力..." style="padding: 8px; width: 150px; background: #0f0f1a; border: 1px solid #333; border-radius: 4px; color: #fff;">
+        <textarea id="textInput" placeholder="テキストを入力...&#10;（改行可）" rows="3" style="padding: 8px; width: 150px; background: #0f0f1a; border: 1px solid #333; border-radius: 4px; color: #fff; resize: vertical;"></textarea>
         <label>
           フォント:
           <select id="textFont" style="padding: 6px; background: #0f0f1a; border: 1px solid #333; border-radius: 4px; color: #fff;">
@@ -1465,9 +1466,13 @@
       const scaleY = rect.height / canvas.height;
       const displayFontSize = fontSize * scaleY;
 
-      textPreview.textContent = text;
+      // Handle multiline text in preview
+      textPreview.innerHTML = text.split('\n').map(line =>
+        `<div style="min-height: ${displayFontSize * 1.2}px">${line || '&nbsp;'}</div>`
+      ).join('');
       textPreview.style.font = `${bold}${displayFontSize}px ${fontFamily}`;
       textPreview.style.color = color;
+      textPreview.style.lineHeight = '1.2';
 
       if (bgEnabled) {
         const r = parseInt(bgColor.slice(1, 3), 16);
@@ -1478,14 +1483,15 @@
         textPreview.style.backgroundColor = 'transparent';
       }
 
-      // Position relative to canvas
+      // Position relative to canvas (accounting for border width)
       const canvasRect = canvas.getBoundingClientRect();
       const containerRect = canvas.parentElement.getBoundingClientRect();
       const offsetLeft = canvasRect.left - containerRect.left;
       const offsetTop = canvasRect.top - containerRect.top;
+      const borderWidth = 2;
 
-      textPreview.style.left = (offsetLeft + textPreviewX * scaleX) + 'px';
-      textPreview.style.top = (offsetTop + textPreviewY * scaleY) + 'px';
+      textPreview.style.left = (offsetLeft + textPreviewX * scaleX - borderWidth) + 'px';
+      textPreview.style.top = (offsetTop + textPreviewY * scaleY - borderWidth) + 'px';
 
       // Apply rotation
       const rotation = parseInt(textRotation.value);
@@ -1564,6 +1570,8 @@
       const fontFamily = textFont.value;
       const bold = textBold.checked ? 'bold ' : '';
       const rotation = parseInt(textRotation.value);
+      const lineHeight = fontSize * 1.2;
+      const lines = text.split('\n');
 
       ctx.save();
 
@@ -1574,9 +1582,13 @@
       ctx.font = `${bold}${fontSize}px ${fontFamily}`;
       ctx.textBaseline = 'top';
 
-      const metrics = ctx.measureText(text);
-      const textWidth = metrics.width;
-      const textHeight = fontSize * 1.2;
+      // Calculate max width for background
+      let maxWidth = 0;
+      lines.forEach(line => {
+        const metrics = ctx.measureText(line);
+        if (metrics.width > maxWidth) maxWidth = metrics.width;
+      });
+      const totalHeight = lineHeight * lines.length;
 
       // Draw background if enabled
       if (textBgEnabled.checked) {
@@ -1588,12 +1600,14 @@
 
         const padding = 8;
         ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${bgOpacity})`;
-        ctx.fillRect(-padding, -padding, textWidth + padding * 2, textHeight + padding * 2);
+        ctx.fillRect(-padding, -padding, maxWidth + padding * 2, totalHeight + padding * 2);
       }
 
-      // Draw text
+      // Draw text lines
       ctx.fillStyle = textColor.value;
-      ctx.fillText(text, 0, 0);
+      lines.forEach((line, index) => {
+        ctx.fillText(line, 0, index * lineHeight);
+      });
 
       ctx.restore();
 
